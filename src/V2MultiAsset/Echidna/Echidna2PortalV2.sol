@@ -6,7 +6,7 @@ import "../MintBurnToken.sol";
 import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
 import "./EchidnaConfig.sol";
 
-contract EchidnaPortalV2MultiAsset is EchidnaConfig {
+contract Echidna2PortalV2 is EchidnaConfig {
     MintBurnToken public psmToken;
     VirtualLP public virtualLP;
 
@@ -15,19 +15,6 @@ contract EchidnaPortalV2MultiAsset is EchidnaConfig {
     address public constant PSM_ADDRESS =
         0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5;
     address constant esVKA = 0x95b3F9797077DDCa971aB8524b439553a220EB2A;
-
-    // Vaultka staking contracts
-    address constant SINGLE_STAKING =
-        0x314223E2fA375F972E159002Eb72A96301E99e22;
-    address constant DUAL_STAKING = 0x31Fa38A6381e9d1f4770C73AB14a0ced1528A65E;
-
-    uint256 constant _POOL_ID_USDC = 5;
-    uint256 constant _POOL_ID_WETH = 10;
-
-    address private constant USDC_WATER =
-        0x9045ae36f963b7184861BDce205ea8B08913B48c;
-    address private constant WETH_WATER =
-        0x8A98929750e6709Af765F976c6bddb5BfFE6C06c;
 
     address private constant _PRINCIPAL_TOKEN_ADDRESS_USDC =
         0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
@@ -80,8 +67,8 @@ contract EchidnaPortalV2MultiAsset is EchidnaConfig {
     uint256 usdcSendAmount = 1e9; // 1k USDC
 
     constructor() {
-        hevm.roll(195078119); // sets the correct block number
-        // hevm.warp(); // sets the expected timestamp for the block number
+        // hevm.roll(195078119); // sets the correct block number
+        // hevm.warp(1711625676); // sets the expected timestamp for the block number
 
         // Create Virtual LP instance
         virtualLP = new VirtualLP(
@@ -119,7 +106,7 @@ contract EchidnaPortalV2MultiAsset is EchidnaConfig {
         hundredYearsLater = timestamp + 100 * SECONDS_PER_YEAR;
 
         // Deal tokens to addresses
-        hevm.deal(USER1, 1 ether);
+        // hevm.deal(USER1, 1 ether);
         hevm.prank(psmSender);
         psm.transfer(USER1, psmAmount);
         hevm.prank(usdcSender);

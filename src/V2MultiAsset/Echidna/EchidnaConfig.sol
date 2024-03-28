@@ -11,5 +11,11 @@ contract EchidnaConfig {
     address internal constant USER1 = address(0x10000);
     address internal constant USER2 = address(0x20000);
     address internal constant USER3 = address(0x30000);
-    uint256 internal constant INITIAL_BALANCE = 1_000_000e18;
+
+    address payable internal ADDRESS_ACCOUNT0;
+    address payable internal ADDRESS_ACCOUNT1;
+    address payable internal ADDRESS_ACCOUNT2;
+        
+    uint256 internal constant STARTING_TOKEN_BALANCE = 1_000_000_000e6;
+    uint256 internal constant STARTING_ETH_BALANCE = 1000 ether;
 }

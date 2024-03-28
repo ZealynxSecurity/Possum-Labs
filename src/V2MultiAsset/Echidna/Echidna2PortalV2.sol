@@ -66,7 +66,7 @@ contract Echidna2PortalV2 is EchidnaConfig {
     uint256 psmAmount = 1e25; // 10M PSM
     uint256 usdcSendAmount = 1e9; // 1k USDC
 
-    constructor() {
+    constructor() payable {
         // hevm.roll(195078119); // sets the correct block number
         // hevm.warp(1711625676); // sets the expected timestamp for the block number
 

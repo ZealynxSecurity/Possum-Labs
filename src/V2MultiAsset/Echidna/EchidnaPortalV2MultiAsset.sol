@@ -139,7 +139,7 @@ contract EchidnaPortalV2MultiAsset is EchidnaConfig {
     }
 
     // Echidna test for staking and unstaking invariant
-    function echidna_test_stake_unstake_invariant() public {
+    function test_stake_unstake_invariant() public {
         uint256 stakeAmount = 1000e18; // Simplified stake amount
         hevm.prank(USER1);
         portal_ETH.stake(stakeAmount);
@@ -151,7 +151,7 @@ contract EchidnaPortalV2MultiAsset is EchidnaConfig {
     }
 
     // Echidna test for portal energy token minting and burning consistency
-    function echidna_test_portal_energy_token_mint_burn() public {
+    function test_portal_energy_token_mint_burn() public {
         uint256 mintAmount = 500e18; // Simplified mint amount
         hevm.prank(USER2);
         portal_ETH.mintPortalEnergyToken(USER2, mintAmount); // Assuming this function exists and works directly for simplicity

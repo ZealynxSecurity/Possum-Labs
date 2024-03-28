@@ -7,12 +7,12 @@ import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
 import "./EchidnaConfig.sol";
 
 contract Echidna2PortalV2 is EchidnaConfig {
-    MintBurnToken public psmToken;
-    VirtualLP public virtualLP;
+    MintBurnToken internal psmToken;
+    VirtualLP internal virtualLP;
 
     // External token addresses
     address constant WETH_ADDRESS = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address public constant PSM_ADDRESS =
+    address internal constant PSM_ADDRESS =
         0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5;
     address constant esVKA = 0x95b3F9797077DDCa971aB8524b439553a220EB2A;
 
@@ -23,7 +23,7 @@ contract Echidna2PortalV2 is EchidnaConfig {
     // General constants
     uint256 constant _TERMINAL_MAX_LOCK_DURATION = 157680000;
     uint256 private constant SECONDS_PER_YEAR = 31536000; // seconds in a 365 day year
-    uint256 public maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
+    uint256 internal maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
     uint256 private constant OWNER_DURATION = 31536000; // 1 Year
 
     // Portal Constructor values
@@ -52,8 +52,8 @@ contract Echidna2PortalV2 is EchidnaConfig {
     IERC20 weth = IERC20(WETH_ADDRESS);
 
     // Portals & LP
-    PortalV2MultiAsset public portal_USDC;
-    PortalV2MultiAsset public portal_ETH;
+    PortalV2MultiAsset internal portal_USDC;
+    PortalV2MultiAsset internal portal_ETH;
 
     // Simulated USDC distributor
     address usdcSender = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
@@ -126,7 +126,7 @@ contract Echidna2PortalV2 is EchidnaConfig {
     }
 
     // Echidna test for staking and unstaking invariant
-    function echidna_test_stake_unstake_invariant() public {
+    function test_stake_unstake_invariant() public {
         uint256 stakeAmount = 1000e18; // Simplified stake amount
         hevm.prank(USER1);
         portal_ETH.stake(stakeAmount);
@@ -138,7 +138,7 @@ contract Echidna2PortalV2 is EchidnaConfig {
     }
 
     // Echidna test for portal energy token minting and burning consistency
-    function echidna_test_portal_energy_token_mint_burn() public {
+    function test_portal_energy_token_mint_burn() public {
         uint256 mintAmount = 500e18; // Simplified mint amount
         hevm.prank(USER2);
         portal_ETH.mintPortalEnergyToken(USER2, mintAmount); // Assuming this function exists and works directly for simplicity

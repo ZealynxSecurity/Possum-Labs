@@ -9,6 +9,8 @@ import {ERC20} from "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import {SafeERC20} from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import {ReentrancyGuard} from "@openzeppelin/contracts/security/ReentrancyGuard.sol";
 
+import {console2} from "forge-std/Test.sol";
+
 interface IWETH {
     function deposit() external payable;
 }
@@ -340,12 +342,15 @@ contract PortalV2MultiAsset is ReentrancyGuard {
         /// @dev This knowingly deviates from the CEI pattern
         if (PRINCIPAL_TOKEN_ADDRESS == address(0)) {
             /// @dev Wrap ETH into WETH received by the contract
+            console2.log("ESTOY EN EL 1 IF");
+
             _amount = msg.value;
             IWETH(WETH_ADDRESS).deposit{value: _amount}();
 
             /// @dev Send WETH to virtual LP
             IERC20(WETH_ADDRESS).transfer(VIRTUAL_LP, _amount);
         } else {
+            console2.log("ESTOY EN EL else");
             /// @dev If not native ETH, transfer principal token to contract
             /// @dev Prevent contract from receiving ETH when principal is ERC20
             if (msg.value > 0) {
@@ -364,7 +369,6 @@ contract PortalV2MultiAsset is ReentrancyGuard {
         if (_amount == 0) {
             revert InvalidAmount();
         }
-
         /// @dev Get the current state of the user stake
         (
             ,

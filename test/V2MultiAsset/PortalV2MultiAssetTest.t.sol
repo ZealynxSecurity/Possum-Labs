@@ -401,7 +401,7 @@ contract PortalV2MultiAssetTest is Test {
     //////////////////////////////////////////
 
     // convert
-    function testRevert_convert_I() public {
+    function testRevert_convert_I() public { // @audit => no found
         // when LP is inactive
         vm.startPrank(Alice);
         vm.expectRevert(ErrorsLib.InactiveLP.selector);
@@ -746,8 +746,9 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // stake
-    function testRevert_stake_I() public {
+    function testRevert_stake_I() public {  //@audit-ok
         // After LP is activated but before Portal was registered
+        helper_create_bToken(); // add
         helper_fundLP();
         helper_activateLP();
 
@@ -759,7 +760,7 @@ contract PortalV2MultiAssetTest is Test {
         vm.stopPrank();
     }
 
-    function testRevert_stake_II() public {
+    function testRevert_stake_II() public { //@audit-issue => This test is not correct
         // after Portal was registered but not funded
         helper_registerPortalUSDC();
 
@@ -788,7 +789,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // USDC
-    function testSuccess_stake_USDC() public {
+    function testSuccess_stake_USDC() public { // @audit-ok
         uint256 amount = 1e7;
         helper_prepareSystem();
         helper_setApprovalsInLP_USDC();
@@ -807,7 +808,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // ETH
-    function testSuccess_stake_ETH() public {
+    function testSuccess_stake_ETH() public { //@audit-ok
         uint256 amount = 1e7;
         helper_prepareSystem();
         helper_setApprovalsInLP_ETH();

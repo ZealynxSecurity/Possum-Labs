@@ -58,16 +58,17 @@ contract EchidnaVirtualLP is EchidnaSetup {
         uint256 testPid = _POOL_ID_WETH;
         
         hevm.prank(USER1);
-        virtualLP.registerPortal(
-            testPortal, 
-            testAsset, 
-            testVault, 
-            testPid
-        );
-
-        // Validate the outcome
-        assert(virtualLP.registeredPortals(testPortal) == true);
-        assert(virtualLP.vaults(testPortal, testAsset) == testVault);
-        assert(virtualLP.poolID(testPortal, testAsset) == testPid);    
+        try 
+            virtualLP.registerPortal(
+                testPortal, 
+                testAsset, 
+                testVault, 
+                testPid
+            )
+        {
+            assert(false);
+        } catch {
+            assert(true);
+        }
     }
 }

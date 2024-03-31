@@ -1,46 +1,135 @@
-// // SPDX-License-Identifier: MIT
+// SPDX-License-Identifier: MIT
 
-// import "./IHevm.sol";
-// import "./EchidnaConfig.sol";
-// import "./Debugger.sol";
-// import "./Account.sol";
+import "./EchidnaConfig.sol";
 
-// import "../interfaces/IUSDC.sol";
-// import "../interfaces/IcEther.sol";
+import "../PortalV2MultiAsset.sol";
+import "../MintBurnToken.sol";
+import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
+import "./EchidnaConfig.sol";
 
-// contract EchidnaSetup is EchidnaConfig {
+contract EchidnaSetup is EchidnaConfig {
+    MintBurnToken internal psmToken;
+    VirtualLP internal virtualLP;
 
-//     Account account0 = new Account(0);
-//     Account account1 = new Account(2);
-//     Account account2 = new Account(128);
+    // External token addresses
+    address constant WETH_ADDRESS = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
+    address internal constant PSM_ADDRESS =
+        0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5;
+    address constant esVKA = 0x95b3F9797077DDCa971aB8524b439553a220EB2A;
 
-//     IUSDC usdc = IUSDC(0xA0b86991c6218b36c1d19D4a2e9Eb0cE3606eB48);
-//     IcEther fEth = IcEther(payable(0x26267e41CeCa7C8E0f143554Af707336f27Fa051));
+    uint256 constant _POOL_ID_USDC = 5;
+    uint256 constant _POOL_ID_WETH = 10;
 
-//     constructor() {
-//         // not sure if still necessary, but just in case
-//         hevm.roll(195078119);
+    address internal constant USDC_WATER =
+        0x9045ae36f963b7184861BDce205ea8B08913B48c;
+    address internal constant WETH_WATER =
+        0x8A98929750e6709Af765F976c6bddb5BfFE6C06c;
 
-//         hevm.prank(usdc.masterMinter());
-//         usdc.configureMinter(address(this), type(uint256).max);
+    address internal constant _PRINCIPAL_TOKEN_ADDRESS_USDC =
+        0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
+    address internal constant _PRINCIPAL_TOKEN_ADDRESS_ETH = address(0);
 
-//         ADDRESS_ACCOUNT0 = payable(address(account0));
-//         ADDRESS_ACCOUNT0 = payable(address(account1));
-//         ADDRESS_ACCOUNT2 = payable(address(account2));
+    // General constants
+    uint256 constant _TERMINAL_MAX_LOCK_DURATION = 157680000;
+    uint256 internal constant SECONDS_PER_YEAR = 31536000; // seconds in a 365 day year
+    uint256 internal maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
+    uint256 internal constant OWNER_DURATION = 31536000; // 1 Year
 
-//         ADDRESS_ACCOUNT0.transfer(STARTING_ETH_BALANCE);
-//         ADDRESS_ACCOUNT1.transfer(STARTING_ETH_BALANCE);
-//         ADDRESS_ACCOUNT2.transfer(STARTING_ETH_BALANCE);
+    // Portal Constructor values
+    uint256 constant _TARGET_CONSTANT_USDC = 440528634361 * 1e36;
+    uint256 constant _TARGET_CONSTANT_WETH = 125714213 * 1e36;
 
-//         usdc.mint(ADDRESS_ACCOUNT0, STARTING_TOKEN_BALANCE);
-//         usdc.mint(ADDRESS_ACCOUNT1, STARTING_TOKEN_BALANCE);
-//         usdc.mint(ADDRESS_ACCOUNT2, STARTING_TOKEN_BALANCE);
+    uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days
+    uint256 constant _FUNDING_MIN_AMOUNT = 1e25; // 10M PSM
 
-//         hevm.prank(ADDRESS_ACCOUNT0);
-//         usdc.approve(address(fUsdc), type(uint256).max);
-//         hevm.prank(ADDRESS_ACCOUNT1);
-//         usdc.approve(address(fUsdc), type(uint256).max);
-//         hevm.prank(ADDRESS_ACCOUNT2);
-//         usdc.approve(address(fUsdc), type(uint256).max);
-//     }
-// }
+    uint256 constant _DECIMALS = 18;
+    uint256 constant _DECIMALS_USDC = 6;
+
+    uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
+
+    string _META_DATA_URI = "abcd";
+
+    // time
+    uint256 timestamp;
+    uint256 fundingPhase;
+    uint256 ownerExpiry;
+    uint256 hundredYearsLater;
+
+    // Token Instances
+    IERC20 psm = IERC20(PSM_ADDRESS);
+    IERC20 usdc = IERC20(_PRINCIPAL_TOKEN_ADDRESS_USDC);
+    IERC20 weth = IERC20(WETH_ADDRESS);
+
+    // Portals & LP
+    PortalV2MultiAsset internal portal_USDC;
+    PortalV2MultiAsset internal portal_ETH;
+
+    // Simulated USDC distributor
+    address usdcSender = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
+
+    // PSM Treasury
+    address psmSender = 0xAb845D09933f52af5642FC87Dd8FBbf553fd7B33;
+
+    // starting token amounts
+    uint256 usdcAmount = 1e12; // 1M USDC
+    uint256 psmAmount = 1e25; // 10M PSM
+    uint256 usdcSendAmount = 1e9; // 1k USDC
+
+    constructor() payable {
+        hevm.roll(195078119); // sets the correct block number
+        hevm.warp(1711625676); // sets the expected timestamp for the block number
+
+        // Create Virtual LP instance
+        virtualLP = new VirtualLP(
+            psmSender,
+            _AMOUNT_TO_CONVERT,
+            _FUNDING_PHASE_DURATION,
+            _FUNDING_MIN_AMOUNT
+        );
+        address _VIRTUAL_LP = address(virtualLP);
+
+        // Create Portal instances
+        portal_USDC = new PortalV2MultiAsset(
+            _VIRTUAL_LP,
+            _TARGET_CONSTANT_USDC,
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            _DECIMALS_USDC,
+            "USD Coin",
+            "USDC",
+            _META_DATA_URI
+        );
+        portal_ETH = new PortalV2MultiAsset(
+            _VIRTUAL_LP,
+            _TARGET_CONSTANT_WETH,
+            _PRINCIPAL_TOKEN_ADDRESS_ETH,
+            _DECIMALS,
+            "ETHER",
+            "ETH",
+            _META_DATA_URI
+        );
+
+         // creation time
+        timestamp = block.timestamp;
+        fundingPhase = timestamp + _FUNDING_PHASE_DURATION;
+        ownerExpiry = timestamp + OWNER_DURATION;
+        hundredYearsLater = timestamp + 100 * SECONDS_PER_YEAR;
+
+        // Deal tokens to addresses
+        hevm.prank(psmSender);
+        psm.transfer(USER1, psmAmount);
+        hevm.prank(usdcSender);
+        usdc.transfer(USER1, usdcAmount);
+
+        // hevm.deal(USER2, 1 ether);
+        hevm.prank(psmSender);
+        psm.transfer(USER2, psmAmount);
+        hevm.prank(usdcSender);
+        usdc.transfer(USER2, usdcAmount);
+
+        // hevm.deal(USER3, 1 ether);
+        hevm.prank(psmSender);
+        psm.transfer(USER3, psmAmount);
+        hevm.prank(usdcSender);
+        usdc.transfer(USER3, usdcAmount);
+    }
+}

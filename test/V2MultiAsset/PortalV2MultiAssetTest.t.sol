@@ -707,7 +707,7 @@ contract PortalV2MultiAssetTest is Test {
     //////////////////////////////////////////
 
     // getUpdateAccount
-    function testRevert_getUpdateAccount() public {
+    function testRevert_getUpdateAccount() public { // @audit => No in my tests
         vm.startPrank(Alice);
         // Try to simulate a withdrawal greater than the available balance
         vm.expectRevert(ErrorsLib.InsufficientStakeBalance.selector);
@@ -715,7 +715,7 @@ contract PortalV2MultiAssetTest is Test {
         vm.stopPrank();
     }
 
-    function testSuccess_getUpdateAccount() public {
+    function testSuccess_getUpdateAccount() public { //@audit-issue => pendig
         uint256 amount = 1e7;
         testSuccess_stake_USDC();
 
@@ -777,7 +777,7 @@ contract PortalV2MultiAssetTest is Test {
         vm.stopPrank();
     }
 
-    function testRevert_stake_III() public {
+    function testRevert_stake_III() public { //@audit-issue => vuln
         // ETH with difference in input amount and message value
         helper_registerPortalETH();
 
@@ -825,7 +825,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // unstake
-    function testRevert_unstake() public {
+    function testRevert_unstake() public { // @audit-ok
         helper_prepareSystem();
 
         // amount 0
@@ -851,7 +851,7 @@ contract PortalV2MultiAssetTest is Test {
         vm.stopPrank();
     }
 
-    function testSuccess_unstake_USDC() public {
+    function testSuccess_unstake_USDC() public { // @audit-ok
         uint256 amount = 1e7;
         testSuccess_stake_USDC();
 
@@ -877,7 +877,7 @@ contract PortalV2MultiAssetTest is Test {
         assertTrue(balanceAfter <= usdcAmount);
     }
 
-    function testSuccess_unstake_ETH() public {
+    function testSuccess_unstake_ETH() public { //@audit-ok
         uint256 amount = 1e7;
         testSuccess_stake_ETH();
 
@@ -923,7 +923,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // mintNFTposition
-    function testRevert_mintNFTposition() public {
+    function testRevert_mintNFTposition() public { //@audit-ok
         vm.startPrank(Alice);
         // Invalid recipient
         vm.expectRevert(ErrorsLib.InvalidAddress.selector);
@@ -936,7 +936,7 @@ contract PortalV2MultiAssetTest is Test {
         vm.stopPrank();
     }
 
-    function testSuccess_mintNFTposition() public {
+    function testSuccess_mintNFTposition() public { //@audit-ok
         helper_createNFT();
         testSuccess_stake_USDC();
 
@@ -985,7 +985,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // redeemNFTposition
-    function testRevert_redeemNFTposition() public {
+    function testRevert_redeemNFTposition() public { //@audit-ok
         testSuccess_mintNFTposition();
 
         // Not owner of the NFT
@@ -998,7 +998,7 @@ contract PortalV2MultiAssetTest is Test {
         portal_USDC.redeemNFTposition(123);
     }
 
-    function testSuccess_redeemNFTposition() public {
+    function testSuccess_redeemNFTposition() public { //@audit-ok
         testSuccess_mintNFTposition();
 
         (
@@ -1032,7 +1032,7 @@ contract PortalV2MultiAssetTest is Test {
     }
 
     // buyPortalEnergy
-    function testRevert_buyPortalEnergy() public {
+    function testRevert_buyPortalEnergy() public { //@audit-ok
         helper_prepareSystem();
         // amount 0
         vm.startPrank(Alice);
@@ -1052,11 +1052,11 @@ contract PortalV2MultiAssetTest is Test {
         portal_USDC.buyPortalEnergy(Alice, 1e18, 1e33, block.timestamp);
     }
 
-    function testSuccess_buyPortalEnergy() public {
+    function testSuccess_buyPortalEnergy() public { //@audit-issue => testSuccess_buyPortalEnergy and FV
         helper_prepareSystem();
 
         uint256 portalEnergy;
-        (, , , , , portalEnergy, ) = portal_USDC.getUpdateAccount(
+        (, , , , portalEnergy, , ) = portal_USDC.getUpdateAccount(
             Alice,
             0,
             true
@@ -1067,7 +1067,7 @@ contract PortalV2MultiAssetTest is Test {
         portal_USDC.buyPortalEnergy(Alice, 1e18, 1, block.timestamp);
         vm.stopPrank();
 
-        (, , , , , portalEnergy, ) = portal_USDC.getUpdateAccount(
+        (, , , , portalEnergy, , ) = portal_USDC.getUpdateAccount(
             Alice,
             0,
             true

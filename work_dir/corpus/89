@@ -1,4 +1,4 @@
-Reverted? true 
+Reverted? false 
  Txn:
 [38;2;211;29;219m[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m
-   └─[1] [38;2;35;237;34m0xBb4c00a6D80C34f9136b01A983C8d874f123ED22[0m.[38;2;255;123;114mcreate_portalNFT[0m()
+   └─[1] [38;2;22;11;182m0x4095b599Fb4200561a75916b8FcAaf07F9160bB6[0m.[38;2;255;123;114mcall[0m{value: [38;2;153;0;204m0[0m}()

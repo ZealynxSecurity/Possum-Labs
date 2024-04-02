@@ -1178,8 +1178,8 @@ contract ZealynxTest is Test {
 
     // Increase allowance of tokens used by the USDC Portal
     function helper_setApprovalsInLP_USDC() public {
-        // virtualLP.increaseAllowanceDualStaking();
-        // virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
+        virtualLP.increaseAllowanceDualStaking();
+        virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
         virtualLP.increaseAllowanceVault(address(portal_USDC));
     }
 

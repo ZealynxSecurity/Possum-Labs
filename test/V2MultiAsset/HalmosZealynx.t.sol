@@ -255,25 +255,30 @@ contract Halmos_ZealynxTest is SymTest, Test {
 
     //     assert(portalEnergy == result);
     // }
-    bool setUpInvoked;
+    // bool setUpInvoked;
 
+    // function check_testSuccess_buyPortalEnergy() public { 
+
+    //     console2.log("codesize");
+    //     helper_prepareSystem();
+
+    //     // uint256 vie = svm.createUint(0,'vie');
+
+    //     // setUpInvoked = true;
+    //     // assertTrue(setUpInvoked);
+
+    //     // uint256 portalEnergy;
+    //     // (, , , , portalEnergy, , ) = portal_USDC.getUpdateAccount(
+    //     //     address(Alice),
+    //     //     vie,
+    //     //     setUpInvoked
+    //     // );
+    
+    // }
     function check_testSuccess_buyPortalEnergy() public { 
 
         console2.log("codesize");
-        helper_prepareSystem();
-
-        // uint256 vie = svm.createUint(0,'vie');
-
-        // setUpInvoked = true;
-        // assertTrue(setUpInvoked);
-
-        // uint256 portalEnergy;
-        // (, , , , portalEnergy, , ) = portal_USDC.getUpdateAccount(
-        //     address(Alice),
-        //     vie,
-        //     setUpInvoked
-        // );
-
+        virtualLP.create_bToken();
     
     }
 ////////////// HELPER FUNCTIONS /////////////

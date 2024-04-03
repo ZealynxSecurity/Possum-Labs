@@ -1,4 +1,4 @@
-allContracts: false
+allContracts: true
 
 testMode: 'assertion'
 coverage: true

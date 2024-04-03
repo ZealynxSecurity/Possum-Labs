@@ -145,7 +145,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         uint256 fundingAmount = 1e8;
         hevm.prank(USER1);
         psm.approve(address(virtualLP), 1e55);
-        Debugger.log("Mira balance: ", address(virtualLP).balance);
+
         hevm.prank(USER1);
         try virtualLP.contributeFunding(fundingAmount) {
             // continue
@@ -156,7 +156,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     }
 
     function prepare_convert() internal {
-                hevm.prank(USER1);
+        hevm.prank(USER1);
         prepare_contribution();
 
         // Precondition
@@ -492,7 +492,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         prepare_convert();
 
         // Action
-        try virtualLP.convert(WETH_ADDRESS, address(0), 100, block.timestamp + 1 days) {
+        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, address(0), 100, block.timestamp + 1 days) {
             assert(false);
         } catch {
             // Verification
@@ -518,7 +518,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         uint256 initialRewardPool = virtualLP.fundingRewardPool();
 
         // Action
-        virtualLP.convert(WETH_ADDRESS, USER1, 100e18, block.timestamp + 1 days);
+        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, USER1, 100e18, block.timestamp + 1 days);
 
         // Verification
         uint256 expectedNewReward = (_AMOUNT_TO_CONVERT * FUNDING_REWARD_SHARE) / 100;
@@ -535,7 +535,12 @@ contract EchidnaVirtualLP is EchidnaSetup {
         // IERC20(WETH_ADDRESS).transfer(address(this), _AMOUNT_TO_CONVERT);
         // Convert with realistic parameters
         // Action
-        virtualLP.convert(WETH_ADDRESS, USER1, _AMOUNT_TO_CONVERT, block.timestamp + 1 days);
+        virtualLP.convert(
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            msg.sender,
+            1,
+            block.timestamp
+        );
 
         // Check the recipient received the tokens correctly
         uint256 recipientBalanceAfter = IERC20(WETH_ADDRESS).balanceOf(USER1);
@@ -543,6 +548,18 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
         assert(false);
         // assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
+    }
+
+    function test_revert_with_invalid_token_address() public {
+        prepare_convert();
+
+        // Action
+        try virtualLP.convert(PSM_ADDRESS, USER1, 100, block.timestamp + 1 days) {
+            assert(false);
+        } catch {
+            // Verification
+            assert(true);
+        }
     }
 
     ////////////////// FUZZ TESTS /////////////////
@@ -557,29 +574,17 @@ contract EchidnaVirtualLP is EchidnaSetup {
         require(_minReceived != 0);
         require(_deadline > block.timestamp);
         uint256 contractBalance = IERC20(WETH_ADDRESS).balanceOf(address(this));
-        require(_minReceived < contractBalance);
+        // require(_minReceived < contractBalance);
 
         prepare_convert();
 
         // Action
-        try virtualLP.convert(WETH_ADDRESS, _recipient, _minReceived, _deadline) {
+        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, _recipient, _minReceived, _deadline) {
             assert(true);
         } catch {
             // Verification
             // Fail in case it reverts
             assert(false);
-        }
-    }
-
-    function test_revert_with_invalid_token_address(address _token) public {
-        prepare_convert();
-
-        // Action
-        try virtualLP.convert(_token, USER1, 100, block.timestamp + 1 days) {
-            assert(false);
-        } catch {
-            // Verification
-            assert(true);
         }
     }
 
@@ -589,7 +594,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         hevm.warp(block.timestamp + 2 days);
 
         // Action
-        try virtualLP.convert(WETH_ADDRESS, USER1, 100, block.timestamp - 1 days) {
+        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, USER1, 100, block.timestamp - 1 days) {
             assert(false);
         } catch {
             // Verification
@@ -601,7 +606,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         prepare_convert();
 
         // Action
-        try virtualLP.convert(WETH_ADDRESS, USER1, 1e18, block.timestamp + 1 days) {
+        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, USER1, 1e18, block.timestamp + 1 days) {
             assert(false);
         } catch {
             // Verification

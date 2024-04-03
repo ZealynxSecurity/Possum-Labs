@@ -7,7 +7,7 @@
     "callSequenceLength": 100,
     "corpusDirectory": "corpus-medusa",
     "coverageEnabled": true,
-    "targetContracts": ["EchidnaPortalV2MultiAsset"],
+    "targetContracts": ["EchidnaVirtualLP"],
     "targetContractsBalances": [],
     "constructorArgs": {},
     "deployerAddress": "0x30000",

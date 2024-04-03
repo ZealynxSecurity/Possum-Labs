@@ -46,6 +46,7 @@ contract EchidnaSetup is EchidnaConfig {
     uint256 constant _DECIMALS_USDC = 6;
 
     uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
+    uint256 internal constant FUNDING_REWARD_SHARE = 10; // 10% of yield goes to the funding pool until investors are paid back
 
     string _META_DATA_URI = "abcd";
 
@@ -69,6 +70,11 @@ contract EchidnaSetup is EchidnaConfig {
 
     // PSM Treasury
     address psmSender = 0xAb845D09933f52af5642FC87Dd8FBbf553fd7B33;
+
+        // Vaultka staking contracts
+    address constant SINGLE_STAKING =
+        0x314223E2fA375F972E159002Eb72A96301E99e22;
+    address constant DUAL_STAKING = 0x31Fa38A6381e9d1f4770C73AB14a0ced1528A65E;
 
     // starting token amounts
     uint256 usdcAmount = 1e12; // 1M USDC
@@ -120,13 +126,11 @@ contract EchidnaSetup is EchidnaConfig {
         hevm.prank(usdcSender);
         usdc.transfer(USER1, usdcAmount);
 
-        // hevm.deal(USER2, 1 ether);
         hevm.prank(psmSender);
         psm.transfer(USER2, psmAmount);
         hevm.prank(usdcSender);
         usdc.transfer(USER2, usdcAmount);
 
-        // hevm.deal(USER3, 1 ether);
         hevm.prank(psmSender);
         psm.transfer(USER3, psmAmount);
         hevm.prank(usdcSender);

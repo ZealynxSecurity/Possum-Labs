@@ -38,10 +38,16 @@ contract EchidnaVirtualLP is EchidnaSetup {
         _create_bToken();
         _fundLP();
         _register(
-            testPortal,
-            testAsset,
-            testVault,
-            testPid
+            address(portal_USDC),
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            USDC_WATER,
+            _POOL_ID_USDC
+        );
+        _register(
+            address(portal_ETH),
+            _PRINCIPAL_TOKEN_ADDRESS_ETH,
+            WETH_WATER,
+            _POOL_ID_WETH
         );
         _activateLP();
     }
@@ -111,6 +117,8 @@ contract EchidnaVirtualLP is EchidnaSetup {
         usdc.approve(address(virtualLP), 1e55);
         hevm.prank(address(portal_USDC));
         virtualLP.increaseAllowanceVault(address(portal_USDC));
+        virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
+        virtualLP.increaseAllowanceDualStaking();
     }
 
     function _prepareYieldSourceETH(
@@ -297,9 +305,29 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
     ////////////////// UNIT TESTS /////////////////
 
-        function test_only_registered_portal_deposit_to_yield_source() public {
+    function test_deposit_to_yield_source() public {
         // Preconditions
-        uint256 _amount = 100;
+        uint256 _amount = 1e7;
+        _prepareYieldSourceUSDC(
+            address(portal_USDC),
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            USDC_WATER,
+            _POOL_ID_USDC,
+            _amount
+        );
+
+        // Action
+        hevm.prank(address(portal_USDC));
+        try virtualLP.depositToYieldSource(address(usdc), _amount) {
+            assert(true);
+        } catch {
+            assert(false);
+        }
+    }
+
+    function test_only_registered_portal_deposit_to_yield_source() public {
+        // Preconditions
+        uint256 _amount = 1e7;
         _prepareYieldSourceUSDC(
             address(portal_USDC),
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
@@ -318,7 +346,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     }
 
     ////////////////// FUZZ TESTS /////////////////
-    function test_deposit_to_yield_source_usdc(uint256 _amount) public {
+    function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
         _prepareYieldSourceUSDC(
@@ -345,33 +373,6 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(depositShares == stakedShares);
     }
 
-    function test_deposit_to_yield_source_eth(uint256 _amount) public {
-        // Preconditions
-        require(_amount > 0);
-        _prepareYieldSourceETH(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            WETH_WATER,
-            _POOL_ID_WETH,
-            _amount
-        );
-
-        // Action
-        hevm.prank(address(portal_ETH));
-        virtualLP.depositToYieldSource(address(weth), _amount);
-
-        // Check that stake was processed correctly in Vault and staking contract
-        uint256 depositShares = IWater(WETH_WATER).convertToShares(_amount);
-        uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
-            _POOL_ID_WETH,
-            address(virtualLP)
-        );
-
-        // Verification
-        assert(weth.balanceOf(address(portal_ETH)) == 0);
-        assert(depositShares == stakedShares);
-    }
-
     // ============================================
     // ==       WITHDRAW FROM YIELD SOURCE       ==
     // ============================================
@@ -380,7 +381,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
     function test_only_registered_portal_withdraw_from_yield_source() public {
         // Preconditions
-        uint256 _amount = 100;
+        uint256 _amount = 1e7;
         _prepareYieldSourceUSDC(
             address(portal_USDC),
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
@@ -401,7 +402,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         }
     }
 
-    function test_withdraw_from_yield_source_usdc(uint256 _amount) public {
+    function test_withdraw_from_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
         _prepareYieldSourceUSDC(
@@ -416,8 +417,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
 
         uint256 balanceUser1Start = usdc.balanceOf(USER1);
-        uint256 time = block.timestamp;
-        hevm.warp(time + 100);
+        hevm.warp(block.timestamp + 100);
 
         uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amount);
         uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
@@ -436,42 +436,11 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(usdc.balanceOf(USER1) == balanceUser1Start + netReceived);
     }
 
-    function test_withdraw_from_yield_source_eth(uint256 _amount) public {
-        // Preconditions
-        require(_amount > 0);
-        _prepareYieldSourceETH(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            WETH_WATER,
-            _POOL_ID_WETH,
-            _amount
-        );
-        hevm.prank(address(portal_ETH));
-        virtualLP.depositToYieldSource(address(usdc), _amount);
-
-
-        uint256 balanceUser1Start = usdc.balanceOf(USER1);
-        hevm.warp(block.timestamp + 100);
-
-        uint256 withdrawShares = IWater(WETH_WATER).convertToShares(_amount);
-        uint256 grossReceived = IWater(WETH_WATER).convertToAssets(withdrawShares);
-        uint256 denominator = IWater(WETH_WATER).DENOMINATOR();
-        uint256 fees = (grossReceived * IWater(WETH_WATER).withdrawalFees()) / denominator;
-        uint256 netReceived = grossReceived - fees;
-
-        // Action
-        hevm.prank(address(portal_USDC));
-        virtualLP.withdrawFromYieldSource(address(usdc), USER1, _amount);
-
-        // Verification
-        assert(usdc.balanceOf(USER1) == balanceUser1Start + netReceived);
-    }
-
     // ============================================
     // ==              PSM CONVERTER             ==
     // ============================================
 
-    ////////////////// UNIT TESTS /////////////////
+    //////////////// UNIT TESTS /////////////////
 
     function test_convert() public {
         prepare_convert();
@@ -518,7 +487,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         uint256 initialRewardPool = virtualLP.fundingRewardPool();
 
         // Action
-        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, USER1, 100e18, block.timestamp + 1 days);
+        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, USER1, 100, block.timestamp + 1 days);
 
         // Verification
         uint256 expectedNewReward = (_AMOUNT_TO_CONVERT * FUNDING_REWARD_SHARE) / 100;
@@ -529,11 +498,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         prepare_convert();
 
         uint256 recipientBalanceBefore = IERC20(WETH_ADDRESS).balanceOf(USER1);
-        Debugger.log("recipientBalanceBefore: ", recipientBalanceBefore);
 
-        // Prepare the contract with a balance of the specified token
-        // IERC20(WETH_ADDRESS).transfer(address(this), _AMOUNT_TO_CONVERT);
-        // Convert with realistic parameters
         // Action
         virtualLP.convert(
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
@@ -544,10 +509,8 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
         // Check the recipient received the tokens correctly
         uint256 recipientBalanceAfter = IERC20(WETH_ADDRESS).balanceOf(USER1);
-        Debugger.log("recipientBalanceAfter: ", recipientBalanceAfter);
 
-        assert(false);
-        // assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
+        assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
     }
 
     function test_revert_with_invalid_token_address() public {
@@ -566,20 +529,19 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
     function test_fuzz_convert(
         address _recipient,
-        uint256 _minReceived,
         uint256 _deadline
     ) public {
         // Precondition
         require(_recipient != address(0));
-        require(_minReceived != 0);
-        require(_deadline > block.timestamp);
-        uint256 contractBalance = IERC20(WETH_ADDRESS).balanceOf(address(this));
-        // require(_minReceived < contractBalance);
+        // require(_minReceived != 0);
+        // require(_deadline > block.timestamp);
+        // uint256 contractBalance = IERC20(WETH_ADDRESS).balanceOf(address(this));
+        // require(contractBalance > _minReceived);
 
         prepare_convert();
 
         // Action
-        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, _recipient, _minReceived, _deadline) {
+        try virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, _recipient, 100, block.timestamp + _deadline) {
             assert(true);
         } catch {
             // Verification

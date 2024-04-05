@@ -1,4 +1,0 @@
-Reverted? false 
- Txn:
-[38;2;211;29;219m[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m
-   └─[1] [38;2;116;128;92m0x7364b55896F566968560db15993642215474805C[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()

@@ -1,2 +1,0 @@
-[FirstLevelCall][0x8ef508aca04b32ff3ba5003177cb18bfa6cd79dd -> src/V2MultiAsset/PortalV2MultiAsset.sol:PortalV2MultiAsset(0xf0c500747891ce6dadea2ef8dd1840ad1f3ba507)] (188110be) > ()0010000ab845d09933f54af5642fc87de8fbbf553fd7b33) > ()
-  [Call][test/V2MultiAsset/ZealynxTest.t.sol:ZealynxTest(0x7fa9385be102ac3eac297483dd6233d62b3e1496) -> src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x4095b599fb4200561a75916b8fcaaf07f9160bb6)] (7545c320) > ()

@@ -59,8 +59,6 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
     // fund the Virtual LP
     function _fundLP() internal {
-        uint256 fundingAmount = 1e18;
-
         hevm.prank(psmSender);
         psm.approve(address(virtualLP), 1e55);
         hevm.prank(psmSender);
@@ -679,6 +677,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
     function test_fuzz_contribute_funding(uint256 _fundingAmount) public {
         // Precondition
+        require(_fundingAmount != 0);
         require(_fundingAmount < psmAmount);
         _create_bToken();
 
@@ -705,5 +704,182 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(virtualLP.fundingBalance() == existingFundingBalance);
         assert(bToken.balanceOf(USER1) == mintableAmount);
         assert(psm.balanceOf(address(virtualLP)) == afterBalance);
+    }
+
+    // ============================================
+    // ==           WITHDRAW FUNDING           ==
+    // ============================================
+
+    ////////////////// UNIT TESTS /////////////////
+
+    function test_withdraw_funding() public {
+        // Precondition
+        _create_bToken();
+
+        uint256 _fundingAmount = 1e18 + 13;
+        uint256 withdrawAmount = (_fundingAmount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
+
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(_fundingAmount);
+
+        uint256 beforeBalance = psm.balanceOf(USER1);
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.withdrawFunding(withdrawAmount);
+
+        // Verification
+        assert(bToken.balanceOf(USER1) == 9 * _fundingAmount);
+    }
+
+        function test_revert_withdraw_zero_funding() public {
+        _create_bToken();
+        _fundLP();
+
+        hevm.prank(USER1);
+        try virtualLP.withdrawFunding(0) {
+            assert(false);
+        } catch {
+            assert(true);
+        }
+    }
+
+    function test_revert_withdraw_funding_lp_active() public {
+        _create_bToken();
+        _fundLP();
+
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(1000);
+        _activateLP();
+
+        hevm.prank(USER1);
+        try virtualLP.withdrawFunding(1000) {
+            assert(false);
+        } catch {
+            assert(true);
+        }
+    }
+
+    function test_contract_balance_after_withdraw_funding() public {
+        // Precondition
+        _create_bToken();        
+        uint256 _fundingAmount = 1e18 + 13;
+        uint256 withdrawAmount = (_fundingAmount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
+
+
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(_fundingAmount);
+
+        uint256 beforeBalance = psm.balanceOf(address(virtualLP));
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.withdrawFunding(withdrawAmount);
+
+        // Verification
+        // +1 because of precision cutoff, the contract gains 1 WEI    }
+        assert(psm.balanceOf(address(virtualLP)) == (9 * _fundingAmount) / 10 + 1);
+    }
+
+    function test_funding_balance_decreased() public {
+        // Precondition
+        _create_bToken();
+        uint256 _fundingAmount = 1e18 + 13;
+        uint256 withdrawAmount = (_fundingAmount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
+
+        uint256 existingFundingBalance = virtualLP.fundingBalance();
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(_fundingAmount);
+
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.withdrawFunding(withdrawAmount);
+
+        existingFundingBalance = existingFundingBalance - _fundingAmount;
+
+        // Verification
+        assert(
+            psm.balanceOf(USER1) == psmAmount - (9 * _fundingAmount) / 10 - 1
+        ); // -1 because of precision cutoff, USER1 loses 1 WEI
+    }
+
+    function test_bToken_burned() public {
+        // Precondition
+        _create_bToken();
+        uint256 _fundingAmount = 1e18 + 13;
+        uint256 withdrawAmount = (_fundingAmount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
+
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(_fundingAmount);
+
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+        uint256 beforeBalance = bToken.balanceOf(USER1);
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.withdrawFunding(withdrawAmount);
+
+        // Verification
+        assert(bToken.balanceOf(USER1) == beforeBalance - withdrawAmount);
+    }
+
+    // ////////////////// FUZZ TESTS /////////////////
+
+    function test_fuzz_withdraw_funding(uint256 _fundingAmount) public {
+        // Precondition
+        _create_bToken();
+        require(_fundingAmount != 0);
+        require(_fundingAmount < psmAmount);
+
+        uint256 withdrawAmount = (_fundingAmount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
+
+        // uint256 existingFundingBalance = virtualLP.fundingBalance();
+        // uint256 mintableAmount = (_fundingAmount * FUNDING_MAX_RETURN_PERCENT) / 100;
+        // uint256 beforeBalance = psm.balanceOf(address(virtualLP));
+
+        // Action
+        hevm.prank(USER1);
+        psm.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.contributeFunding(_fundingAmount);
+
+        // existingFundingBalance = existingFundingBalance + _fundingAmount;
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        virtualLP.withdrawFunding(withdrawAmount);
+
+        // Verification
+        assert(bToken.balanceOf(USER1) == 9 * _fundingAmount);
     }
 }

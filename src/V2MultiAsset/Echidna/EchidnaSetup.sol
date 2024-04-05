@@ -34,7 +34,7 @@ contract EchidnaSetup is EchidnaConfig {
     uint256 internal constant SECONDS_PER_YEAR = 31536000; // seconds in a 365 day year
     uint256 internal maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
     uint256 internal constant OWNER_DURATION = 31536000; // 1 Year
-    uint256 public constant FUNDING_MAX_RETURN_PERCENT = 1000; // maximum redemption value percent of bTokens (must be >100)
+    uint256 internal constant FUNDING_MAX_RETURN_PERCENT = 1000; // maximum redemption value percent of bTokens (must be >100)
 
     // Portal Constructor values
     uint256 constant _TARGET_CONSTANT_USDC = 440528634361 * 1e36;

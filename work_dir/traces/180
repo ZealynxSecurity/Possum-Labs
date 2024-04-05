@@ -1,0 +1,5 @@
+[FirstLevelCall][0x35c9dfd76bf02107ff4f7128bd69716612d31ddb -> src/V2MultiAsset/PortalV2MultiAsset.sol:PortalV2MultiAsset(0x7364b55896f566968560db15993642215474805c)] (b6dd5e99) > ()
+[FirstLevelCall][0x68dd4f5ac792eaaa5e36f4f4e0474e0625dc9024 -> src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb5784bce034a0b2bff734c5a4803f3d6dc3a)] (3b4c8a240000000000000000000000008ef508aca04b32ff3ba5003177cb18bfa6cd79dd) > ()
+  [StaticCall][src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb5784bce034a0b2bff734c5a4803f3d6dc3a) -> 0x8ef508aca04b32ff3ba5003177cb18bfa6cd79dd] (4e7ce35d) > ()
+    [StaticCall][src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb5784bce034a0b2bff734c5a4803f3d6dc3a) -> 0x68dd4f5ac792eaaa5e36f4f4e0474e0625dc9024] (dd62ed3e00000000000000000000000078edb5784bce034a0b2bff734c5a4803f3d6dc3a0000000000000000000000000000000000000000000000000000000000000000) > ()
+    [Call][src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb5784bce034a0b2bff734c5a4803f3d6dc3a) -> 0x68dd4f5ac792eaaa5e36f4f4e0474e0625dc9024] (095ea7b30000000000000000000000000000000000000000000000000000000000000000ffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffffff) > ()

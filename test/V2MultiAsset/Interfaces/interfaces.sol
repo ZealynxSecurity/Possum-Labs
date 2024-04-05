@@ -6,8 +6,48 @@ interface Weth_address {
   function implementation (  ) external returns ( address implementation_ );
   function upgradeTo ( address newImplementation ) external;
   function upgradeToAndCall ( address newImplementation, bytes calldata data ) external;
+    event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
+
 }
+
 interface Psm_address {
+    function admin (  ) external returns ( address admin_ );
+  function changeAdmin ( address newAdmin ) external;
+  function implementation (  ) external returns ( address implementation_ );
+  function upgradeTo ( address newImplementation ) external;
+  function upgradeToAndCall ( address newImplementation, bytes calldata data ) external;
+
+      event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
 }
 interface esvka {
   function VKA (  ) external view returns ( address );
@@ -87,6 +127,23 @@ interface usdc_water {
   function implementation (  ) external returns ( address implementation_ );
   function upgradeTo ( address newImplementation ) external;
   function upgradeToAndCall ( address newImplementation, bytes calldata data ) external;
+  
+      event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
+
 }
 
 interface weth_water {
@@ -98,6 +155,21 @@ interface principal_token_address_usdc {
   function implementation (  ) external view returns ( address );
   function upgradeTo ( address newImplementation ) external;
   function upgradeToAndCall ( address newImplementation, bytes calldata data ) external;
+        event Transfer(address indexed from, address indexed to, uint256 value);
+
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function totalSupply() external view returns (uint256);
+
+    function balanceOf(address account) external view returns (uint256);
+
+    function transfer(address to, uint256 amount) external returns (bool);
+
+    function allowance(address owner, address spender) external view returns (uint256);
+
+    function approve(address spender, uint256 amount) external returns (bool);
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool);
 }
 
 

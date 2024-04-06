@@ -20,7 +20,7 @@ import {EthWater} from "src/onchain/Water.sol";
 import {FiatTokenV2_2} from "src/onchain/FiatTokenV2_2.sol";
 import {esVKAToken} from "src/onchain/esVKAToken.sol";
 
-import {handlerVirtual} from "./handlerVirtual.sol";
+import {HandlerVirtual} from "./HandlerVirtual.sol";
 
 
 contract ZealynxTest is Test {
@@ -84,7 +84,7 @@ contract ZealynxTest is Test {
     EthWater WETH_WATER;
 
     FiatTokenV2_2 _PRINCIPAL_TOKEN_ADDRESS_USDC;
-    handlerVirtual HandlerVirtual;
+    HandlerVirtual handlerVirtual;
     esVKAToken esVKA ;
 
     // Portals & LP
@@ -105,7 +105,6 @@ contract ZealynxTest is Test {
 
     ////////////// SETUP ////////////////////////
     function setUp() public {
-
         psm = new MockToken("psm","psm");
         usdc = new MockToken("usdc","usdc");
         weth = new MockToken("weth", "weth");
@@ -115,8 +114,7 @@ contract ZealynxTest is Test {
         USDC_WATER = new EthWater();
         WETH_WATER = new EthWater();
         _PRINCIPAL_TOKEN_ADDRESS_USDC = new FiatTokenV2_2();
-        HandlerVirtual = new handlerVirtual(psmSender,_AMOUNT_TO_CONVERT, _FUNDING_PHASE_DURATION,_FUNDING_MIN_AMOUNT);
-
+        handlerVirtual = new HandlerVirtual(psmSender,_AMOUNT_TO_CONVERT, _FUNDING_PHASE_DURATION,_FUNDING_MIN_AMOUNT);
 
         // Create Virtual LP instance
        virtualLP = new VirtualLP(
@@ -137,6 +135,7 @@ contract ZealynxTest is Test {
             "USDC",
             _META_DATA_URI
         );
+
         portal_ETH = new PortalV2MultiAsset(
             address(virtualLP),
             _TARGET_CONSTANT_WETH,
@@ -162,7 +161,7 @@ contract ZealynxTest is Test {
         
         vm.startPrank(psmSender);
         psm.approve(address(virtualLP), mintAmount);
-        psm.approve(address(HandlerVirtual), mintAmount);
+        psm.approve(address(handlerVirtual), mintAmount);
         vm.stopPrank();
 
         // Mintear tokens USDC a usdcSender
@@ -207,10 +206,8 @@ contract ZealynxTest is Test {
         vm.deal(address(psm), etherAmount);
         vm.deal(address(usdc), etherAmount);
         vm.deal(address(virtualLP), etherAmount);
-        vm.deal(address(HandlerVirtual), etherAmount);
+        vm.deal(address(handlerVirtual), etherAmount);
     }
-
-
 
     function test_val() public {
         portal_USDC.create_portalNFT();
@@ -221,17 +218,17 @@ contract ZealynxTest is Test {
     function test_contribute(address _dualS, uint256 _asset) public {
         vm.startPrank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        HandlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
+        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
         vm.stopPrank();
 
         helper_registerPortalETH();
         helper_registerPortalUSDC();
 
         vm.warp(fundingPhase);
-        HandlerVirtual._activateLP();    
+        handlerVirtual._activateLP();    
 
         // HandlerVirtual._increaseAllowanceDualStaking(address(esVKA), _dualS ); //@audit => no found
-        HandlerVirtual.increaseAllowanceSingleStaking(address(portal_USDC), _asset);
+        handlerVirtual.increaseAllowanceSingleStaking(address(portal_USDC), _asset);
 
 
     }

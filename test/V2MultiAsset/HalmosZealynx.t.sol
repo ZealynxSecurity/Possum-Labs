@@ -20,7 +20,7 @@ import {EthWater} from "src/onchain/Water.sol";
 import {FiatTokenV2_2} from "src/onchain/FiatTokenV2_2.sol";
 
 import {SymTest} from "halmos-cheatcodes/SymTest.sol";
-import {handlerVirtual} from "./handlerVirtual.sol";
+import {HandlerVirtual} from "./handlerVirtual.sol";
 
 
 
@@ -79,7 +79,7 @@ contract Halmos_ZealynxTest is SymTest, Test {
     EthWater WETH_WATER;
 
     FiatTokenV2_2 _PRINCIPAL_TOKEN_ADDRESS_USDC;
-    handlerVirtual HandlerVirtual;
+    HandlerVirtual handlerVirtual;
 
     // Portals & LP
     PortalV2MultiAsset public portal_USDC;
@@ -122,7 +122,7 @@ contract Halmos_ZealynxTest is SymTest, Test {
         USDC_WATER = new EthWater();
         WETH_WATER = new EthWater();
         _PRINCIPAL_TOKEN_ADDRESS_USDC = new FiatTokenV2_2();
-        HandlerVirtual = new handlerVirtual(psmSender,_AMOUNT_TO_CONVERT, _FUNDING_PHASE_DURATION,_FUNDING_MIN_AMOUNT);
+        handlerVirtual = new HandlerVirtual(psmSender,_AMOUNT_TO_CONVERT, _FUNDING_PHASE_DURATION,_FUNDING_MIN_AMOUNT);
 
 
 
@@ -170,7 +170,7 @@ contract Halmos_ZealynxTest is SymTest, Test {
         
         vm.startPrank(psmSender);
         psm.approve(address(virtualLP), mintAmount);
-        psm.approve(address(HandlerVirtual), mintAmount);
+        psm.approve(address(handlerVirtual), mintAmount);
         vm.stopPrank();
 
         // Mintear tokens USDC a usdcSender
@@ -215,23 +215,44 @@ contract Halmos_ZealynxTest is SymTest, Test {
         vm.deal(address(psm), etherAmount);
         vm.deal(address(usdc), etherAmount);
         vm.deal(address(virtualLP), etherAmount);
-        vm.deal(address(HandlerVirtual), etherAmount);
-    }
+        vm.deal(address(handlerVirtual), etherAmount);
+    } 
 
 
     //////////// testSuccess_buyPortalEnergy ////////////
 
     function check_testSuccess_buyPortalEnergy() public { 
-
         console2.log("codesize");
 
         vm.startPrank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        HandlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
+        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
         vm.stopPrank();
 
-        helper_registerPortalETH();
-        helper_registerPortalUSDC();
+        vm.prank(psmSender);
+        virtualLP.registerPortal(
+            address(portal_ETH),
+            _PRINCIPAL_TOKEN_ADDRESS_ETH,
+            address(WETH_WATER),
+            _POOL_ID_WETH
+        );
+    }
+
+    function check_testSuccess_buyPortalEnergy() public { 
+        console2.log("codesize");
+
+        vm.startPrank(psmSender);
+        psm.approve(address(virtualLP), 1e55);
+        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
+        vm.stopPrank();
+
+        vm.prank(psmSender);
+        virtualLP.registerPortal(
+            address(portal_USDC),
+            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
+            address(USDC_WATER),
+            _POOL_ID_USDC
+        );
     }
 
     

@@ -3,7 +3,7 @@ pragma solidity 0.8.19;
 
 
 import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
-import{MockToken} from "./mocks/MockToken.sol";
+import {MockToken} from "./mocks/MockToken.sol";
 import {esVKAToken} from "src/onchain/esVKAToken.sol";
 
 
@@ -29,9 +29,7 @@ error TimeLockActive();
 error NoProfit();
 error OwnerRevoked();
 
-contract handlerVirtual is VirtualLP {
-
-
+contract HandlerVirtual is VirtualLP {
 
     uint256 public _fundingBalance;
     bool public _isActiveLP;
@@ -44,8 +42,7 @@ contract handlerVirtual is VirtualLP {
     uint256 constant _MAX_UINT = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
 
     constructor(address _tokenAddress, uint256 _AMOUNT_TO_CONVERT, uint256 _FUNDING_PHASE_DURATION, uint256 _FUNDING_MIN_AMOUNT)
-        VirtualLP(_tokenAddress, _AMOUNT_TO_CONVERT,_FUNDING_PHASE_DURATION, _FUNDING_MIN_AMOUNT) {
-        }
+        VirtualLP(_tokenAddress, _AMOUNT_TO_CONVERT,_FUNDING_PHASE_DURATION, _FUNDING_MIN_AMOUNT) {}
 
 
     function _contributeFunding(uint256 _amount, address psm, address hbToken) external {
@@ -58,13 +55,13 @@ contract handlerVirtual is VirtualLP {
 
         _fundingBalance += _amount;
 
-       MockToken(psm).transferFrom(msg.sender, address(this), _amount);
+        MockToken(psm).transferFrom(msg.sender, address(this), _amount);
 
         MockToken(hbToken).mint(msg.sender, mintableAmount);
     }
 
 
-    function _activateLP() external {
+    function _handler_activateLP() external {
         /// @dev Check that the funding phase is over and enough funding has been contributed
         if (block.timestamp < CREATION_TIME + FUNDING_PHASE_DURATION) {
             revert FundingPhaseOngoing();
@@ -96,12 +93,93 @@ contract handlerVirtual is VirtualLP {
         );
     }
 
+    function _handler_increaseAllowanceVault(address _portal) public {
+        /// @dev Get the asset of the Portal
+        address asset = address(0x0003);
 
+        /// @dev Allow spending of Assets by the associated Vault
+        IERC20(asset).safeIncreaseAllowance(
+            vaults[_portal][asset],
+            MAX_UINT
+        );
+    }
 
+    function _handler_depositToYieldSource(
+        address _asset,
+        uint256 _amount
+    ) external {
 
+        /// @dev Deposit tokens into Vault to receive Shares (WATER)
+        /// @dev Approval of token spending is handled with a separate function to save gas
+        uint256 depositShares = 20;
 
+        /// @dev Stake the Vault Shares into the staking contract using the pool identifier (pid)
+        /// @dev Approval of token spending is handled with a separate function to save gas
+        ISingleStaking(SINGLE_STAKING).deposit(
+            poolID[msg.sender][_asset],
+            depositShares
+        );
+    }
 
+    function _handler_getBurnValuePSM(
+        uint256 _amount
+    ) public view returns (uint256 burnValue) {
+        /// @dev Calculate the minimum burn value
+        uint256 minValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
 
+        /// @dev Calculate the time based burn value
+        uint256 accruedValue = (_amount *
+            (block.timestamp - CREATION_TIME) *
+            FUNDING_APR) / (100 * SECONDS_PER_YEAR);
+
+        /// @dev Calculate the maximum and current burn value
+        uint256 maxValue = _amount;
+        uint256 currentValue = minValue + accruedValue;
+
+        burnValue = (currentValue < maxValue) ? currentValue : maxValue;
+    }
+
+    function _handler_getBurnableBtokenAmount()
+        public
+        view
+        returns (uint256 amountBurnable)
+    {
+        /// @dev Calculate the burn value of 1 full bToken in PSM
+        /// @dev Add 1 WEI to handle rounding issue in the next step
+        uint256 burnValueFullToken = _handler_getBurnValuePSM(1e18) + 1;
+
+        /// @dev Calculate and return the amount of bTokens burnable
+        /// @dev This will slightly underestimate because of the 1 WEI for reliability reasons
+        amountBurnable = (fundingRewardPool * 1e18) / burnValueFullToken;
+    }
+
+    function burnBtokens(uint256 _amount) external {
+        /// @dev Check that the burn amount is not zero
+        if (_amount == 0) {
+            revert InvalidAmount();
+        }
+
+        /// @dev Check that the burn amount is not larger than what can be redeemed
+        uint256 burnable = _handler_getBurnableBtokenAmount();
+        if (_amount > burnable) {
+            revert InvalidAmount();
+        }
+
+        /// @dev Calculate how many PSM the user receives based on the burn amount
+        uint256 amountToReceive = _handler_getBurnValuePSM(_amount);
+
+        /// @dev Reduce the funding reward pool by the amount of PSM payable to the user
+        fundingRewardPool -= amountToReceive;
+
+        /// @dev Burn the bTokens from the user's balance
+        MockToken(hbToken).burnFrom(msg.sender, _amount);
+
+        /// @dev Transfer the PSM to the user
+        MockToken(psm).transfer(msg.sender, amountToReceive);
+
+        /// @dev Event that informs about burn amount and received PSM by the caller
+        emit RewardsRedeemed(msg.sender, _amount, amountToReceive);
+    }
 
 
 

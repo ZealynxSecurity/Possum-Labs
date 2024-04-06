@@ -103,6 +103,9 @@ contract ZealynxTest is Test {
     uint256 psmAmount = 1e25; // 10M PSM
     uint256 usdcSendAmount = 1e9; // 1k USDC
 
+
+     uint256 public constant FUNDING_MAX_RETURN_PERCENT = 1000;
+
     ////////////// SETUP ////////////////////////
     function setUp() public {
         psm = new MockToken("psm","psm");
@@ -114,7 +117,7 @@ contract ZealynxTest is Test {
         USDC_WATER = new EthWater();
         WETH_WATER = new EthWater();
         _PRINCIPAL_TOKEN_ADDRESS_USDC = new FiatTokenV2_2();
-        handlerVirtual = new HandlerVirtual(psmSender,_AMOUNT_TO_CONVERT, _FUNDING_PHASE_DURATION,_FUNDING_MIN_AMOUNT);
+        handlerVirtual = new HandlerVirtual(psmSender,_FUNDING_MIN_AMOUNT);
 
         // Create Virtual LP instance
        virtualLP = new VirtualLP(
@@ -316,10 +319,10 @@ contract ZealynxTest is Test {
         _create_bToken();
 
         uint256 fundingAmount = 1e8;
-        vm.prank(USER1);
+        vm.prank(Alice);
         MockToken(psm).approve(address(virtualLP), 1e55);
 
-        vm.prank(USER1);
+        vm.prank(Alice);
         virtualLP.contributeFunding(fundingAmount);
     }
 
@@ -335,7 +338,7 @@ contract ZealynxTest is Test {
         helper_sendUSDCtoLP();
         vm.prank(psmSender);
         MockToken(psm).approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
+        vm.prank(psmSender);
     }
 
     // ============================================
@@ -385,7 +388,7 @@ contract ZealynxTest is Test {
         );
 
         vm.prank(Alice);
-        MockToken hbToken = MockToken(address(handlerVirtual.hbToken()));
+        MockToken(hbToken)  = MockToken(address(handlerVirtual.hbToken()));
         uint256 beforeBalance = hbToken.balanceOf(Alice);
 
         uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();

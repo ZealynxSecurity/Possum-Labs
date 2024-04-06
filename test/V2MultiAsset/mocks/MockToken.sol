@@ -30,7 +30,7 @@ contract MockToken is ERC20, ERC20Burnable, ERC20Permit {
         _mint(to, amount);
     }
 
-    function burnFrom(address account, uint256 amount) public virtual {
+    function burnFrom(address account, uint256 amount) public virtual override {
         _spendAllowance(account, _msgSender(), amount);
         _burn(account, amount);
     }

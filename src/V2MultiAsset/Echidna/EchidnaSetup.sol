@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
 import "./EchidnaConfig.sol";
 
@@ -40,6 +41,7 @@ contract EchidnaSetup is EchidnaConfig {
     uint256 constant _TARGET_CONSTANT_USDC = 440528634361 * 1e36;
     uint256 constant _TARGET_CONSTANT_WETH = 125714213 * 1e36;
 
+    uint256 internal constant FUNDING_APR = 36; // annual redemption value increase (APR) of bTokens
     uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days
     uint256 constant _FUNDING_MIN_AMOUNT = 1e25; // 10M PSM
 

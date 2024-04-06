@@ -77,20 +77,6 @@ contract EchidnaVirtualLP is EchidnaSetup {
         usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
     }
 
-    // simulate a full convert() cycle
-    function helper_executeConvert() internal {
-        helper_sendUSDCtoLP();
-        hevm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
-        virtualLP.convert(
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            msg.sender,
-            1,
-            block.timestamp
-        );
-    }
-
     function _prepareYieldSourceUSDC(
         address testPortal,
         address testAsset,
@@ -146,19 +132,13 @@ contract EchidnaVirtualLP is EchidnaSetup {
     }
 
     function prepare_contribution() internal {
+        uint256 _fundingAmount = 1e18;
         _create_bToken();
 
-        uint256 fundingAmount = 1e8;
         hevm.prank(USER1);
         psm.approve(address(virtualLP), 1e55);
-
         hevm.prank(USER1);
-        try virtualLP.contributeFunding(fundingAmount) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
+        virtualLP.contributeFunding(_fundingAmount);
     }
 
     function prepare_convert() internal {
@@ -301,7 +281,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==        DEPOSIT TO YIELD SOURCE         ==
     // ============================================
 
+    ///////////////////////////////////////////////
     ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_deposit_to_yield_source() public {
         // Preconditions
@@ -343,7 +325,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
         }
     }
 
+    ///////////////////////////////////////////////
     ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
     function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
@@ -375,7 +359,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==       WITHDRAW FROM YIELD SOURCE       ==
     // ============================================
 
+    ///////////////////////////////////////////////
     ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_only_registered_portal_withdraw_from_yield_source() public {
         // Preconditions
@@ -549,7 +535,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
         }
     }
 
+    ///////////////////////////////////////////////
     ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_fuzz_convert(
         uint256 _deadline
@@ -571,7 +559,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==           CONTRIBUTE FUNDING           ==
     // ============================================
 
+    ///////////////////////////////////////////////
     ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_contribute_funding() public {
         _create_bToken();
@@ -673,7 +663,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(bToken.balanceOf(USER1) == mintableAmount);
     }
 
+    ///////////////////////////////////////////////
     ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_fuzz_contribute_funding(uint256 _fundingAmount) public {
         // Precondition
@@ -710,7 +702,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==           WITHDRAW FUNDING           ==
     // ============================================
 
+    ///////////////////////////////////////////////
     ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_withdraw_funding() public {
         // Precondition
@@ -849,7 +843,9 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(bToken.balanceOf(USER1) == beforeBalance - withdrawAmount);
     }
 
-    // ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
+    ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
 
     function test_fuzz_withdraw_funding(uint256 _fundingAmount) public {
         // Precondition
@@ -860,17 +856,12 @@ contract EchidnaVirtualLP is EchidnaSetup {
         uint256 withdrawAmount = (_fundingAmount *
             FUNDING_MAX_RETURN_PERCENT) / 1000; // withdraw 10% of the funded amount
 
-        // uint256 existingFundingBalance = virtualLP.fundingBalance();
-        // uint256 mintableAmount = (_fundingAmount * FUNDING_MAX_RETURN_PERCENT) / 100;
-        // uint256 beforeBalance = psm.balanceOf(address(virtualLP));
-
         // Action
         hevm.prank(USER1);
         psm.approve(address(virtualLP), 1e55);
         hevm.prank(USER1);
         virtualLP.contributeFunding(_fundingAmount);
 
-        // existingFundingBalance = existingFundingBalance + _fundingAmount;
         IERC20 bToken = IERC20(address(virtualLP.bToken()));
 
         // Action
@@ -881,5 +872,142 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
         // Verification
         assert(bToken.balanceOf(USER1) == 9 * _fundingAmount);
+    }
+
+    // ============================================
+    // ==          GET BURN VALUE PSM            ==
+    // ============================================
+
+    ///////////////////////////////////////////////
+    ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
+
+    function test_revert_get_burn_value_psm_inactive_lp() public {
+        uint256 _amount = 1e18;
+        _create_bToken();
+        _fundLP();
+
+        // Action
+        hevm.warp(block.timestamp + 1 days);
+        try virtualLP.getBurnValuePSM(_amount) {
+            assert(false);
+        } catch {
+            // Verification
+            assert(true);
+        }
+    }
+
+    ///////////////////////////////////////////////
+    ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
+
+    function test_fuzz_get_burn_value_psm(uint256 _amount) public {
+        // Precondition
+        require(_amount != 0);
+        uint256 creationTime = block.timestamp;
+        _create_bToken();
+        _fundLP();
+        _activateLP();
+
+        // Fast forward time
+        hevm.warp(hundredYearsLater);
+        // Calculate expected burn value after warping
+        uint256 burnValueAfterWarp = virtualLP.getBurnValuePSM(_amount);
+
+        // Expected minValue
+        uint256 expectedMinValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
+
+        // Expected accruedValue (for a large warp, this will be significant)
+        uint256 expectedAccruedValue = (_amount *
+            (block.timestamp - creationTime) * FUNDING_APR) / (100 * SECONDS_PER_YEAR);
+
+        // Calculate expectedCurrentValue
+        uint256 expectedCurrentValue = expectedMinValue + expectedAccruedValue;
+        
+        // Calculate the maximum and current burn value
+        uint256 expectedBurnValue = (expectedCurrentValue < _amount) ? expectedCurrentValue : _amount;
+
+        // Assert that the burn value after warping matches the capped or calculated expectedBurnValue
+        assert(burnValueAfterWarp == expectedBurnValue); // "Burn value after time warp does not match expected calculation.");
+    }
+
+    // ============================================
+    // ==             BURN B TOKENS              ==
+    // ============================================
+
+    ///////////////////////////////////////////////
+    ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
+
+    function test_revert_burn_zero_b_tokens() public {
+        // Precondition
+        uint256 _amount = 0;
+        prepare_convert();
+        virtualLP.convert(
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            msg.sender,
+            1,
+            block.timestamp
+        );
+
+        hevm.prank(USER1);
+
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+        uint256 beforeBalance = bToken.balanceOf(USER1);
+
+        uint256 burnable = virtualLP.getBurnableBtokenAmount();
+        Debugger.log("Burnable: ", burnable);
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        try virtualLP.burnBtokens(_amount) {
+            assert(false);
+        } catch {
+            assert(true);
+        }
+    }
+
+    ///////////////////////////////////////////////
+    ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
+
+    function test_fuzz_burn_b_tokens(uint256 _amount) public {
+        // Precondition
+        require(_amount != 0);
+        require(_amount < 1e18);
+        uint256 withdrawAmount = (_amount *
+            FUNDING_MAX_RETURN_PERCENT) / 1000;
+
+        prepare_convert();
+        virtualLP.convert(
+            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            msg.sender,
+            1,
+            block.timestamp
+        );
+
+        hevm.prank(USER1);
+
+        IERC20 bToken = IERC20(address(virtualLP.bToken()));
+        uint256 beforeBalance = bToken.balanceOf(USER1);
+
+        uint256 burnable = virtualLP.getBurnableBtokenAmount();
+        Debugger.log("Burnable: ", burnable);
+
+        // Action
+        hevm.prank(USER1);
+        bToken.approve(address(virtualLP), 1e55);
+        hevm.prank(USER1);
+        Debugger.log("Amount to Burn : ", _amount);
+        try virtualLP.burnBtokens(_amount) {
+            // continue
+        } catch {
+            assert(false);
+        }
+
+        // Verification
+        assert(bToken.balanceOf(USER1) == beforeBalance - withdrawAmount);
     }
 }

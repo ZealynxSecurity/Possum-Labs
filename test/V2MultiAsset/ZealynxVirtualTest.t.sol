@@ -260,7 +260,7 @@ contract ZealynxTest is Test {
         vm.prank(psmSender);
         psm.approve(address(handlerVirtual), 1e55);
         vm.prank(psmSender);
-        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(hbToken)) ;
+        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken)) ;
     }
 
     // activate the Virtual LP

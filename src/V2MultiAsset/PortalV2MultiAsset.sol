@@ -846,4 +846,27 @@ contract PortalV2MultiAsset is ReentrancyGuard {
             maxLockDuration = newValue;
         }
     }
+
+
+    //
+         function getAccountDetails(address user)
+        public
+        view
+        returns (
+            uint256 lastUpdateTime,
+            uint256 lastMaxLockDuration,
+            uint256 stakedBalance,
+            uint256 maxStakeDebt,
+            uint256 portalEnergy
+        )
+    {
+        Account storage account = accounts[user];
+        return (
+            account.lastUpdateTime,
+            account.lastMaxLockDuration,
+            account.stakedBalance,
+            account.maxStakeDebt,
+            account.portalEnergy
+        );
+    }
 }

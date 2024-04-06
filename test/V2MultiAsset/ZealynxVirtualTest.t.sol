@@ -210,6 +210,7 @@ contract ZealynxTest is Test {
         vm.deal(address(usdc), etherAmount);
         vm.deal(address(virtualLP), etherAmount);
         vm.deal(address(handlerVirtual), etherAmount);
+        vm.deal(address(this), etherAmount);
     }
 
     // ============================================
@@ -323,7 +324,7 @@ contract ZealynxTest is Test {
         MockToken(psm).approve(address(virtualLP), 1e55);
 
         vm.prank(Alice);
-        virtualLP.contributeFunding(fundingAmount);
+        handlerVirtual.contributeFunding(fundingAmount);
     }
 
     function prepare_convert() internal {

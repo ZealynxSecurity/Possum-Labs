@@ -154,7 +154,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         address testVault = address(USDC_WATER);
         uint256 testPid = _POOL_ID_USDC;
 
-        // Action
+                // Action
         _register(
             testPortal, 
             testAsset, 
@@ -193,7 +193,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
             testPid
         );    
     }
-
+        
     function test_revert_register_portal_not_owner() public {
         address testPortal = address(portal_ETH);
         address testAsset = _PRINCIPAL_TOKEN_ADDRESS_ETH; 
@@ -243,7 +243,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
         // Action
         try virtualLP.removeOwner() {
-            assert(false);
+assert(false);
         } catch {
             // Verification
             assert(true);

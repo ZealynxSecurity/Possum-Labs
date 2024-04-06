@@ -5,9 +5,11 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Burnable.sol";
 import "@openzeppelin/contracts/token/ERC20/extensions/ERC20Permit.sol";
 
+import { SafeERC20 } from "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
+
 error NotOwner();
 
-contract MintBurnToken is ERC20, ERC20Burnable, ERC20Permit {
+contract MockToken is ERC20, ERC20Burnable, ERC20Permit {
     address public immutable OWNER;
 
     constructor(
@@ -24,7 +26,11 @@ contract MintBurnToken is ERC20, ERC20Burnable, ERC20Permit {
         _;
     }
 
-    function mint(address to, uint256 amount) external onlyOwner {
+    function mint(address to, uint256 amount) external  {
         _mint(to, amount);
     }
+
+    // function _transferFrom(address from, address to, uint256 amount) public {
+    //     transferFrom(from, to, amount);
+    // }
 }

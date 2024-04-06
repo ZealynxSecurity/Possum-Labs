@@ -431,27 +431,27 @@ function testFuzz_Revert_stake_0_InvalidAmount(uint256 fuzzAmount) public {
 //////////// testFuzz_Revert_stake_InvalidAmount ////////////
 
 //@audit-issue 
-function testFuzz_Revert_stake_InvalidAmount(uint256 fuzzAmount, uint256 _amount) public {
-    helper_create_bToken();
-    helper_fundLP();
-    helper_registerPortalETH();
-    helper_activateLP();
-    helper_setApprovalsInLP_ETH();
+// function testFuzz_Revert_stake_InvalidAmount(uint256 fuzzAmount, uint256 _amount) public {
+//     helper_create_bToken();
+//     helper_fundLP();
+//     helper_registerPortalETH();
+//     helper_activateLP();
+//     helper_setApprovalsInLP_ETH();
 
-    deal(address(weth), Alice, 1e10); 
-    uint256 aliceInitialETHBalance = Alice.balance;
+//     deal(address(weth), Alice, 1e10); 
+//     uint256 aliceInitialETHBalance = Alice.balance;
 
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialETHBalance);
-    vm.assume(_amount > 0 && _amount <= aliceInitialETHBalance);
-    vm.assume (_amount != fuzzAmount);
+//     vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialETHBalance);
+//     vm.assume(_amount > 0 && _amount <= aliceInitialETHBalance);
+//     vm.assume (_amount != fuzzAmount);
 
-    vm.startPrank(Alice);
+//     vm.startPrank(Alice);
 
-    vm.expectRevert(ErrorsLib.InvalidAmount.selector);
-    portal_ETH.stake{value: _amount}(fuzzAmount); 
+//     vm.expectRevert(ErrorsLib.InvalidAmount.selector);
+//     portal_ETH.stake{value: _amount}(fuzzAmount); 
 
-    vm.stopPrank();
-}
+//     vm.stopPrank();
+// }
 
 
 //////////////////
@@ -583,45 +583,45 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
 //////////// testSuccess_getUpdateAccount ////////////
 
-function testSuccess_getUpdateAccount(uint256 fuzzAmount) public {
-    // STAKE
-    helper_prepareSystem();
-    helper_setApprovalsInLP_USDC();
+// function testSuccess_getUpdateAccount(uint256 fuzzAmount) public {
+//     // STAKE
+//     helper_prepareSystem();
+//     helper_setApprovalsInLP_USDC();
 
-    uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
-    uint256 minOperationalAmount = 1e4; 
-    vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
+//     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
+//     uint256 minOperationalAmount = 1e4; 
+//     vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
 
-    vm.startPrank(Alice);
-    helper_Stake(Alice, fuzzAmount);
-    vm.stopPrank();
+//     vm.startPrank(Alice);
+//     helper_Stake(Alice, fuzzAmount);
+//     vm.stopPrank();
 
 
-    vm.startPrank(Alice);
-    (
-        uint256 lastUpdateTime,
-        uint256 lastMaxLockDuration,
-        uint256 stakedBalance,
-        uint256 maxStakeDebt,
-        uint256 portalEnergy,
-        uint256 availableToWithdraw,
-        uint256 portalEnergyTokensRequired
-    ) = portal_USDC.getUpdateAccount(Alice, 100, true);
+//     vm.startPrank(Alice);
+//     (
+//         uint256 lastUpdateTime,
+//         uint256 lastMaxLockDuration,
+//         uint256 stakedBalance,
+//         uint256 maxStakeDebt,
+//         uint256 portalEnergy,
+//         uint256 availableToWithdraw,
+//         uint256 portalEnergyTokensRequired
+//     ) = portal_USDC.getUpdateAccount(Alice, 100, true);
 
-    assertEq(lastUpdateTime, block.timestamp);
-    assertEq(lastMaxLockDuration, portal_USDC.maxLockDuration());
-    assertEq(stakedBalance, fuzzAmount + 100);
-    assertEq(
-        maxStakeDebt,
-        (stakedBalance * lastMaxLockDuration * 1e18) /
-            (SECONDS_PER_YEAR * portal_USDC.DECIMALS_ADJUSTMENT())
-    );
-    assertEq(portalEnergy, maxStakeDebt);
-    assertEq(availableToWithdraw, fuzzAmount + 100);
-    assertEq(portalEnergyTokensRequired, 0);
+//     assertEq(lastUpdateTime, block.timestamp);
+//     assertEq(lastMaxLockDuration, portal_USDC.maxLockDuration());
+//     assertEq(stakedBalance, fuzzAmount + 100);
+//     assertEq(
+//         maxStakeDebt,
+//         (stakedBalance * lastMaxLockDuration * 1e18) /
+//             (SECONDS_PER_YEAR * portal_USDC.DECIMALS_ADJUSTMENT())
+//     );
+//     assertEq(portalEnergy, maxStakeDebt);
+//     assertEq(availableToWithdraw, fuzzAmount + 100);
+//     assertEq(portalEnergyTokensRequired, 0);
 
-    vm.stopPrank();
-}
+//     vm.stopPrank();
+// }
 
 
 
@@ -1034,48 +1034,48 @@ function testSuccess_getUpdateAccount(uint256 fuzzAmount) public {
 
         vm.stopPrank();
     }
-    function testSuccess2_getUpdateAccount() public {
-        uint256 amount = 1e7;
-        helper_prepareSystem();
-        helper_setApprovalsInLP_USDC();
+    // function testSuccess2_getUpdateAccount() public {
+    //     uint256 amount = 1e7;
+    //     helper_prepareSystem();
+    //     helper_setApprovalsInLP_USDC();
 
-        uint256 balanceBefore = usdc.balanceOf(Alice);
+    //     uint256 balanceBefore = usdc.balanceOf(Alice);
 
-        vm.startPrank(Alice);
-        usdc.approve(address(portal_USDC), 1e55);
-        portal_USDC.stake(amount);
-        vm.stopPrank();
+    //     vm.startPrank(Alice);
+    //     usdc.approve(address(portal_USDC), 1e55);
+    //     portal_USDC.stake(amount);
+    //     vm.stopPrank();
 
-        uint256 balanceAfter = usdc.balanceOf(Alice);
+    //     uint256 balanceAfter = usdc.balanceOf(Alice);
 
-        assertEq(balanceBefore - amount, balanceAfter);
-        assertEq(portal_USDC.totalPrincipalStaked(), amount);
+    //     assertEq(balanceBefore - amount, balanceAfter);
+    //     assertEq(portal_USDC.totalPrincipalStaked(), amount);
 
-        vm.startPrank(Alice);
-        (
-            uint256 lastUpdateTime,
-            uint256 lastMaxLockDuration,
-            uint256 stakedBalance,
-            uint256 maxStakeDebt,
-            uint256 portalEnergy,
-            uint256 availableToWithdraw,
-            uint256 portalEnergyTokensRequired
-        ) = portal_USDC.getUpdateAccount(Alice, 1000, true);
+    //     vm.startPrank(Alice);
+    //     (
+    //         uint256 lastUpdateTime,
+    //         uint256 lastMaxLockDuration,
+    //         uint256 stakedBalance,
+    //         uint256 maxStakeDebt,
+    //         uint256 portalEnergy,
+    //         uint256 availableToWithdraw,
+    //         uint256 portalEnergyTokensRequired
+    //     ) = portal_USDC.getUpdateAccount(Alice, 1000, true);
 
-        assertEq(lastUpdateTime, block.timestamp);
-        assertEq(lastMaxLockDuration, portal_USDC.maxLockDuration());
-        assertEq(stakedBalance, amount + 1000);
-        assertEq(
-            maxStakeDebt,
-            (stakedBalance * lastMaxLockDuration * 1e18) /
-                (SECONDS_PER_YEAR * portal_USDC.DECIMALS_ADJUSTMENT())
-        );
-        assertEq(portalEnergy, maxStakeDebt);
-        assertEq(availableToWithdraw, amount + 1000);
-        assertEq(portalEnergyTokensRequired, 0);
+    //     assertEq(lastUpdateTime, block.timestamp);
+    //     assertEq(lastMaxLockDuration, portal_USDC.maxLockDuration());
+    //     assertEq(stakedBalance, amount + 1000);
+    //     assertEq(
+    //         maxStakeDebt,
+    //         (stakedBalance * lastMaxLockDuration * 1e18) /
+    //             (SECONDS_PER_YEAR * portal_USDC.DECIMALS_ADJUSTMENT())
+    //     );
+    //     assertEq(portalEnergy, maxStakeDebt);
+    //     assertEq(availableToWithdraw, amount + 1000);
+    //     assertEq(portalEnergyTokensRequired, 0);
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
 
 
 

@@ -21,20 +21,20 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ) internal {
         // Precondition
         hevm.prank(psmSender);
-        virtualLP.registerPortal(
+        try virtualLP.registerPortal(
             testPortal, 
             testAsset, 
             testVault, 
             testPid
-        );
+        ) {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
     }
 
-    function _prepareLP(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
+    function _prepareLP() internal {
         _create_bToken();
         _fundLP();
         _register(
@@ -62,7 +62,12 @@ contract EchidnaVirtualLP is EchidnaSetup {
         hevm.prank(psmSender);
         psm.approve(address(virtualLP), 1e55);
         hevm.prank(psmSender);
-        virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
+        try virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT) {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
     }
 
     // activate the Virtual LP
@@ -77,19 +82,8 @@ contract EchidnaVirtualLP is EchidnaSetup {
         usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
     }
 
-    function _prepareYieldSourceUSDC(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid,
-        uint256 _amount
-    ) internal {
-        _prepareLP(
-            testPortal,
-            testAsset,
-            testVault,
-            testPid
-        );
+    function _prepareYieldSourceUSDC(uint256 _amount) internal {
+        _prepareLP();
 
         hevm.prank(usdcSender);
         usdc.transfer(address(portal_USDC), _amount);
@@ -105,32 +99,6 @@ contract EchidnaVirtualLP is EchidnaSetup {
         virtualLP.increaseAllowanceDualStaking();
     }
 
-    function _prepareYieldSourceETH(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid,
-        uint256 _amount
-    ) internal {
-        _prepareLP(
-            testPortal,
-            testAsset,
-            testVault,
-            testPid
-        );
-
-        hevm.prank(usdcSender);
-        weth.transfer(address(portal_ETH), _amount);
-
-        hevm.prank(address(portal_ETH));
-        // send USDC from Portal to LP -> simulates calling stake() in the Portal
-        weth.transfer(address(virtualLP), _amount);
-
-        hevm.prank(address(portal_ETH));
-        weth.approve(address(virtualLP), 1e55);
-        virtualLP.increaseAllowanceVault(address(portal_ETH));
-    }
-
     function prepare_contribution() internal {
         uint256 _fundingAmount = 1e18;
         _create_bToken();
@@ -138,7 +106,12 @@ contract EchidnaVirtualLP is EchidnaSetup {
         hevm.prank(USER1);
         psm.approve(address(virtualLP), 1e55);
         hevm.prank(USER1);
-        virtualLP.contributeFunding(_fundingAmount);
+        try virtualLP.contributeFunding(_fundingAmount) {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
     }
 
     function prepare_convert() internal {
@@ -288,13 +261,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     function test_deposit_to_yield_source() public {
         // Preconditions
         uint256 _amount = 1e7;
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+        _prepareYieldSourceUSDC(_amount);
 
         // Action
         hevm.prank(address(portal_USDC));
@@ -308,13 +275,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     function test_only_registered_portal_deposit_to_yield_source() public {
         // Preconditions
         uint256 _amount = 1e7;
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+        _prepareYieldSourceUSDC(_amount);
 
         // Action
         hevm.prank(USER2);
@@ -328,16 +289,11 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ///////////////////////////////////////////////
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
+    
     function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+        _prepareYieldSourceUSDC(_amount);
 
         // Action
         hevm.prank(address(portal_USDC));
@@ -366,13 +322,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     function test_only_registered_portal_withdraw_from_yield_source() public {
         // Preconditions
         uint256 _amount = 1e7;
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+        _prepareYieldSourceUSDC(_amount);
         hevm.prank(address(portal_USDC));
         virtualLP.depositToYieldSource(address(usdc), _amount);
 
@@ -389,13 +339,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     function test_withdraw_from_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+        _prepareYieldSourceUSDC(_amount);
         hevm.prank(address(portal_USDC));
         virtualLP.depositToYieldSource(address(usdc), _amount);
 
@@ -539,9 +483,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
 
-    function test_fuzz_convert(
-        uint256 _deadline
-    ) public {
+    function test_fuzz_convert(uint256 _deadline) public {
         // Precondition
         prepare_convert();
 
@@ -732,7 +674,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(bToken.balanceOf(USER1) == 9 * _fundingAmount);
     }
 
-        function test_revert_withdraw_zero_funding() public {
+    function test_revert_withdraw_zero_funding() public {
         _create_bToken();
         _fundLP();
 

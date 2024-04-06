@@ -282,7 +282,7 @@ contract ZealynxTest is Test {
         psm.approve(address(virtualLP), 1e55);
         vm.prank(psmSender);
         virtualLP.convert(
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
             msg.sender,
             1,
             block.timestamp
@@ -381,14 +381,14 @@ contract ZealynxTest is Test {
 
         prepare_convert();
         handlerVirtual.convert(
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
+            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
             msg.sender,
             1,
             block.timestamp
         );
 
         vm.prank(Alice);
-        MockToken(hbToken)  = MockToken(address(handlerVirtual.hbToken()));
+        // (hbToken) = MockToken(address(handlerVirtual.hbToken()));
         uint256 beforeBalance = hbToken.balanceOf(Alice);
 
         uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();

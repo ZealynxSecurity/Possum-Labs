@@ -16,3 +16,4 @@ docs/
 # Output
 crytic-export/
 corpus-echidna/
+crytic-export/combined_solc.json

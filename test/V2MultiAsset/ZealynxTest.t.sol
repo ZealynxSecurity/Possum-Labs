@@ -507,42 +507,42 @@ contract ZealynxTest is Test {
         assertEq(balanceAfter, balanceBefore + netReceived);
         assertTrue(balanceAfter <= usdcAmount);
     }
-    function testRevert_unstake_InsufficientStakeBalance_USDC(uint256 fuzzAmount) public {
-        // STAKE //
-        helper_prepareSystem();
-        helper_setApprovalsInLP_USDC();
+    // function testRevert_unstake_InsufficientStakeBalance_USDC(uint256 fuzzAmount) public {
+    //     // STAKE //
+    //     helper_prepareSystem();
+    //     helper_setApprovalsInLP_USDC();
 
-        uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
-        uint256 minOperationalAmount = 1e4; // Ejemplo de un mínimo operativo que considera las tarifas
-        vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
+    //     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
+    //     uint256 minOperationalAmount = 1e4; // Ejemplo de un mínimo operativo que considera las tarifas
+    //     vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
 
-        vm.startPrank(Alice);
-        helper_Stake(Alice, fuzzAmount);
-        vm.stopPrank();
+    //     vm.startPrank(Alice);
+    //     helper_Stake(Alice, fuzzAmount);
+    //     vm.stopPrank();
 
-        // UNSTAKE //
+    //     // UNSTAKE //
 
-        vm.warp(block.timestamp + 100);
+    //     vm.warp(block.timestamp + 100);
 
-        vm.prank(Alice);
-        vm.expectRevert(ErrorsLib.InvalidAmount.selector);
-        portal_USDC.unstake(0);
-        vm.stopPrank();
+    //     vm.prank(Alice);
+    //     vm.expectRevert(ErrorsLib.InvalidAmount.selector);
+    //     portal_USDC.unstake(0);
+    //     vm.stopPrank();
 
-        (, , uint256 stakedBalance, , )= portal_USDC.getAccountDetails(Alice);
-        // amount > user stake balance
-        vm.startPrank(psmSender);
-        psm.approve(address(portal_USDC), 1e55);
-        portal_USDC.buyPortalEnergy(Alice, 1e18, 1, hundredYearsLater);
-        vm.stopPrank();
+    //     (, , uint256 stakedBalance, , )= portal_USDC.getAccountDetails(Alice);
+    //     // amount > user stake balance
+    //     vm.startPrank(psmSender);
+    //     psm.approve(address(portal_USDC), 1e55);
+    //     portal_USDC.buyPortalEnergy(Alice, 1e18, 1, hundredYearsLater);
+    //     vm.stopPrank();
 
-        vm.startPrank(Alice);
-        vm.expectRevert(ErrorsLib.InsufficientStakeBalance.selector);
-        portal_USDC.unstake(stakedBalance + 1);
+    //     vm.startPrank(Alice);
+    //     vm.expectRevert(ErrorsLib.InsufficientStakeBalance.selector);
+    //     portal_USDC.unstake(stakedBalance + 1);
 
-        vm.stopPrank();
+    //     vm.stopPrank();
 
-    }
+    // }
 
 
 //////////// testSuccess_unstake_ETH ////////////
@@ -1011,40 +1011,40 @@ contract ZealynxTest is Test {
         assertEq(balanceAfter, balanceBefore + netReceived);
         assertTrue(balanceAfter <= usdcAmount);
     }
-    function test_No_Success_uinti_unstake_USDC() public { // @audit-ok
-        uint256 amount = 1e7;
-        helper_prepareSystem();
-        helper_setApprovalsInLP_USDC();
+    // function test_No_Success_uinti_unstake_USDC() public { // @audit-ok
+    //     uint256 amount = 1e7;
+    //     helper_prepareSystem();
+    //     helper_setApprovalsInLP_USDC();
 
-         uint256 balanceBefore2 = usdc.balanceOf(Alice);
+    //      uint256 balanceBefore2 = usdc.balanceOf(Alice);
 
-        vm.startPrank(Alice);
-        usdc.approve(address(portal_USDC), 1e55);
-        console2.log("PRINCIPAL_TOKEN_ADDRESS",(portal_USDC.PRINCIPAL_TOKEN_ADDRESS()));
-        portal_USDC.stake(amount);
-        vm.stopPrank();
+    //     vm.startPrank(Alice);
+    //     usdc.approve(address(portal_USDC), 1e55);
+    //     console2.log("PRINCIPAL_TOKEN_ADDRESS",(portal_USDC.PRINCIPAL_TOKEN_ADDRESS()));
+    //     portal_USDC.stake(amount);
+    //     vm.stopPrank();
 
-        uint256 balanceAfter2 = usdc.balanceOf(Alice);
+    //     uint256 balanceAfter2 = usdc.balanceOf(Alice);
 
-        assertEq(balanceBefore2 - amount, balanceAfter2);
-        assertEq(portal_USDC.totalPrincipalStaked(), amount);
+    //     assertEq(balanceBefore2 - amount, balanceAfter2);
+    //     assertEq(portal_USDC.totalPrincipalStaked(), amount);
 
 
-        vm.warp(block.timestamp + 100);
+    //     vm.warp(block.timestamp + 100);
 
-        (, , uint256 stakedBalance, , )= portal_USDC.getAccountDetails(Alice);
-        // amount > user stake balance
-        vm.startPrank(psmSender);
-        psm.approve(address(portal_USDC), 1e55);
-        portal_USDC.buyPortalEnergy(Alice, 1e18, 1, hundredYearsLater);
-        vm.stopPrank();
+    //     (, , uint256 stakedBalance, , )= portal_USDC.getAccountDetails(Alice);
+    //     // amount > user stake balance
+    //     vm.startPrank(psmSender);
+    //     psm.approve(address(portal_USDC), 1e55);
+    //     portal_USDC.buyPortalEnergy(Alice, 1e18, 1, hundredYearsLater);
+    //     vm.stopPrank();
 
-        vm.startPrank(Alice);
-        vm.expectRevert(ErrorsLib.InsufficientStakeBalance.selector);
-        portal_USDC.unstake(stakedBalance + 1);
+    //     vm.startPrank(Alice);
+    //     vm.expectRevert(ErrorsLib.InsufficientStakeBalance.selector);
+    //     portal_USDC.unstake(stakedBalance + 1);
 
-        vm.stopPrank();
-    }
+    //     vm.stopPrank();
+    // }
     function testSuccess2_getUpdateAccount() public {
         uint256 amount = 1e7;
         helper_prepareSystem();

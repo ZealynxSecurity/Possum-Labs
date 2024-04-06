@@ -31,6 +31,9 @@ error OwnerRevoked();
 
 contract HandlerVirtual is VirtualLP {
 
+    uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
+    uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days
+
     uint256 public _fundingBalance;
     bool public _isActiveLP;
     bool public _bTokenCreated; 
@@ -41,7 +44,7 @@ contract HandlerVirtual is VirtualLP {
 
     uint256 constant _MAX_UINT = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
 
-    constructor(address _tokenAddress, uint256 _AMOUNT_TO_CONVERT, uint256 _FUNDING_PHASE_DURATION, uint256 _FUNDING_MIN_AMOUNT)
+    constructor(address _tokenAddress, uint256 _FUNDING_MIN_AMOUNT)
         VirtualLP(_tokenAddress, _AMOUNT_TO_CONVERT,_FUNDING_PHASE_DURATION, _FUNDING_MIN_AMOUNT) {}
 
 
@@ -153,7 +156,7 @@ contract HandlerVirtual is VirtualLP {
         amountBurnable = (fundingRewardPool * 1e18) / burnValueFullToken;
     }
 
-    function burnBtokens(uint256 _amount, address hbToken, address psm) external {
+    function _handler_burnBtokens(uint256 _amount, address hbToken, address psm) external {
         /// @dev Check that the burn amount is not zero
         if (_amount == 0) {
             revert InvalidAmount();
@@ -181,6 +184,73 @@ contract HandlerVirtual is VirtualLP {
         emit RewardsRedeemed(msg.sender, _amount, amountToReceive);
     }
 
+    function _handler_convert(
+        address _token,
+        address _recipient,
+        uint256 _minReceived,
+        uint256 _deadline,
+        address _psmToken
+    ) external nonReentrant activeLP {
+        /// @dev Check the validity of token and recipient addresses
+        // if (_token == PSM_ADDRESS || _recipient == address(0)) {
+        //     revert InvalidAddress();
+        // }
+
+        // /// @dev Prevent zero value
+        // if (_minReceived == 0) {
+        //     revert InvalidAmount();
+        // }
+
+        // /// @dev Check that the deadline has not expired
+        // if (_deadline < block.timestamp) {
+        //     revert DeadlineExpired();
+        // }
+
+        /// @dev Get the contract balance of the specified token
+        uint256 contractBalance;
+        if (_token == address(0)) {
+            contractBalance = address(this).balance;
+        } else {
+            contractBalance = IERC20(_token).balanceOf(address(this));
+        }
+
+        /// @dev Check that enough output tokens are available for frontrun protection
+        if (contractBalance < _minReceived) {
+            revert InsufficientReceived();
+        }
+
+        /// @dev initialize helper variables
+        uint256 maxRewards = MockToken(hbToken).totalSupply();
+        uint256 newRewards = (AMOUNT_TO_CONVERT * FUNDING_REWARD_SHARE) / 100;
+
+        /// @dev Check if rewards must be added, adjust reward pool accordingly
+        if (fundingRewardPool + newRewards >= maxRewards) {
+            fundingRewardPool = maxRewards;
+        } else {
+            fundingRewardPool += newRewards;
+        }
+
+        /// @dev transfer PSM to the LP
+        MockToken(_psmToken).transferFrom(
+            msg.sender,
+            address(this),
+            _AMOUNT_TO_CONVERT
+        );
+
+        /// @dev Transfer the output token from the contract to the recipient
+        if (_token == address(0)) {
+            (bool sent, ) = payable(_recipient).call{value: contractBalance}(
+                ""
+            );
+            if (!sent) {
+                revert FailedToSendNativeToken();
+            }
+        } else {
+            MockToken(_token).safeTransfer(_recipient, contractBalance);
+        }
+
+        emit ConvertExecuted(_token, msg.sender, _recipient, contractBalance);
+    }
 
 
 

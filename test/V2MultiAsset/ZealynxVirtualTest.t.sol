@@ -369,7 +369,7 @@ contract ZealynxTest is Test {
     //     // assertTrue(depositShares == stakedShares);
     // }
 
-    function test_fuzz_burn_b_tokens() public {
+    function test_burn_b_tokens() public {
         // Precondition
         uint256 _amount = 1000;
         
@@ -377,34 +377,27 @@ contract ZealynxTest is Test {
             FUNDING_MAX_RETURN_PERCENT) / 1000;
 
         prepare_convert();
-        virtualLP.convert(
+        handlerVirtual.convert(
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
             msg.sender,
             1,
             block.timestamp
         );
 
-        hevm.prank(USER1);
+        vm.prank(Alice);
+        MockToken hbToken = MockToken(address(handlerVirtual.hbToken()));
+        uint256 beforeBalance = hbToken.balanceOf(Alice);
 
-        IERC20 bToken = IERC20(address(virtualLP.bToken()));
-        uint256 beforeBalance = bToken.balanceOf(USER1);
-
-        uint256 burnable = virtualLP.getBurnableBtokenAmount();
-        Debugger.log("Burnable: ", burnable);
+        uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();
 
         // Action
-        hevm.prank(USER1);
-        bToken.approve(address(virtualLP), 1e55);
-        hevm.prank(USER1);
-        Debugger.log("Amount to Burn : ", _amount);
-        try virtualLP.burnBtokens(_amount, address(psm)) {
-            // continue
-        } catch {
-            assert(false);
-        }
+        vm.prank(Alice);
+        hbToken.approve(address(virtualLP), 1e55);
+        vm.prank(Alice);
+        handlerVirtual._handler_burnBtokens(_amount,address(hbToken), address(psm));
 
         // Verification
-        assert(bToken.balanceOf(USER1) == beforeBalance - withdrawAmount);
+        assertTrue(hbToken.balanceOf(Alice) == beforeBalance - withdrawAmount);
     }
 
 

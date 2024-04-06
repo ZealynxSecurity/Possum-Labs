@@ -4,6 +4,7 @@ testMode: 'assertion'
 coverage: true
 corpusDir: 'corpus-echidna'
 
+workers: 3
 seqLen: 100
 testLimit: 100000
 

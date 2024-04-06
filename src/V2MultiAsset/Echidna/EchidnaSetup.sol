@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: MIT
+pragma solidity ^0.8.19;
 
 import "./EchidnaConfig.sol";
 
@@ -34,11 +35,13 @@ contract EchidnaSetup is EchidnaConfig {
     uint256 internal constant SECONDS_PER_YEAR = 31536000; // seconds in a 365 day year
     uint256 internal maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
     uint256 internal constant OWNER_DURATION = 31536000; // 1 Year
+    uint256 internal constant FUNDING_MAX_RETURN_PERCENT = 1000; // maximum redemption value percent of bTokens (must be >100)
 
     // Portal Constructor values
     uint256 constant _TARGET_CONSTANT_USDC = 440528634361 * 1e36;
     uint256 constant _TARGET_CONSTANT_WETH = 125714213 * 1e36;
 
+    uint256 internal constant FUNDING_APR = 36; // annual redemption value increase (APR) of bTokens
     uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days
     uint256 constant _FUNDING_MIN_AMOUNT = 1e25; // 10M PSM
 

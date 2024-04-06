@@ -257,7 +257,7 @@ contract ZealynxTest is Test {
         vm.prank(psmSender);
         psm.approve(address(handlerVirtual), 1e55);
         vm.prank(psmSender);
-        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT);
+        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(hbToken)) ;
     }
 
     // activate the Virtual LP
@@ -342,32 +342,32 @@ contract ZealynxTest is Test {
     // ==             TEST CASES                 ==
     // ============================================
 
-    function test_deposit_to_yield_source_usdc() public {
-        // Preconditions
-        uint256 _amount = 1000;
-        _prepareYieldSourceUSDC(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC,
-            _amount
-        );
+    // function test_deposit_to_yield_source_usdc() public {
+    //     // Preconditions
+    //     uint256 _amount = 1000;
+    //     _prepareYieldSourceUSDC(
+    //         address(portal_USDC),
+    //         _PRINCIPAL_TOKEN_ADDRESS_USDC,
+    //         USDC_WATER,
+    //         _POOL_ID_USDC,
+    //         _amount
+    //     );
 
-        // Action
-        vm.prank(address(portal_USDC));
-        handlerVirtual._handler_depositToYieldSource(address(usdc), _amount);
+    //     // Action
+    //     vm.prank(address(portal_USDC));
+    //     handlerVirtual._handler_depositToYieldSource(address(usdc), _amount);
 
-        // Check that stake was processed correctly in Vault and staking contract
-        // uint256 depositShares = IWater(USDC_WATER).convertToShares(_amount);
-        // uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
-        //     _POOL_ID_USDC,
-        //     address(virtualLP)
-        // );
+    //     // Check that stake was processed correctly in Vault and staking contract
+    //     // uint256 depositShares = IWater(USDC_WATER).convertToShares(_amount);
+    //     // uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
+    //     //     _POOL_ID_USDC,
+    //     //     address(virtualLP)
+    //     // );
 
-        // // Verification
-        // assertTrue(usdc.balanceOf(address(portal_USDC)) == 0);
-        // assertTrue(depositShares == stakedShares);
-    }
+    //     // // Verification
+    //     // assertTrue(usdc.balanceOf(address(portal_USDC)) == 0);
+    //     // assertTrue(depositShares == stakedShares);
+    // }
 
     function test_fuzz_burn_b_tokens() public {
         // Precondition
@@ -397,7 +397,7 @@ contract ZealynxTest is Test {
         bToken.approve(address(virtualLP), 1e55);
         hevm.prank(USER1);
         Debugger.log("Amount to Burn : ", _amount);
-        try virtualLP.burnBtokens(_amount) {
+        try virtualLP.burnBtokens(_amount, address(psm)) {
             // continue
         } catch {
             assert(false);

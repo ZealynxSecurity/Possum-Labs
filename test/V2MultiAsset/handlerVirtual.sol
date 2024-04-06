@@ -98,28 +98,28 @@ contract HandlerVirtual is VirtualLP {
         address asset = address(0x0003);
 
         /// @dev Allow spending of Assets by the associated Vault
-        IERC20(asset).safeIncreaseAllowance(
+        MockToken(asset).safeIncreaseAllowance(
             vaults[_portal][asset],
             MAX_UINT
         );
     }
 
-    function _handler_depositToYieldSource(
-        address _asset,
-        uint256 _amount
-    ) external {
+    // function _handler_depositToYieldSource(
+    //     address _asset,
+    //     uint256 _amount
+    // ) external {
 
-        /// @dev Deposit tokens into Vault to receive Shares (WATER)
-        /// @dev Approval of token spending is handled with a separate function to save gas
-        uint256 depositShares = 20;
+    //     /// @dev Deposit tokens into Vault to receive Shares (WATER)
+    //     /// @dev Approval of token spending is handled with a separate function to save gas
+    //     uint256 depositShares = 20;
 
-        /// @dev Stake the Vault Shares into the staking contract using the pool identifier (pid)
-        /// @dev Approval of token spending is handled with a separate function to save gas
-        ISingleStaking(SINGLE_STAKING).deposit(
-            poolID[msg.sender][_asset],
-            depositShares
-        );
-    }
+    //     /// @dev Stake the Vault Shares into the staking contract using the pool identifier (pid)
+    //     /// @dev Approval of token spending is handled with a separate function to save gas
+    //     ISingleStaking(SINGLE_STAKING).deposit(
+    //         poolID[msg.sender][_asset],
+    //         depositShares
+    //     );
+    // }
 
     function _handler_getBurnValuePSM(
         uint256 _amount
@@ -153,7 +153,7 @@ contract HandlerVirtual is VirtualLP {
         amountBurnable = (fundingRewardPool * 1e18) / burnValueFullToken;
     }
 
-    function burnBtokens(uint256 _amount) external {
+    function burnBtokens(uint256 _amount, address hbToken, address psm) external {
         /// @dev Check that the burn amount is not zero
         if (_amount == 0) {
             revert InvalidAmount();

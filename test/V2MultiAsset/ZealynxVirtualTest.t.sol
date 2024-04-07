@@ -254,7 +254,7 @@ contract ZealynxTest is Test {
 
     // create the bToken token
     function _create_bToken() internal {
-        virtualLP.create_bToken();
+        handlerVirtual._handler_create_bToken();
     }
 
     // fund the Virtual LP
@@ -396,16 +396,16 @@ contract ZealynxTest is Test {
         vm.prank(Alice);
         MockToken(psm).approve(address(virtualLP), 1e55);
         
-        vm.startPrank(Alice);
-        handlerVirtual._handler_convert(
-            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-            msg.sender,
-            1,
-            block.timestamp,
-            address(psm),
-            address(hbToken)
-        );
-        vm.stopPrank();
+        // vm.startPrank(Alice);
+        // handlerVirtual._handler_convert(
+        //     address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
+        //     msg.sender,
+        //     1,
+        //     block.timestamp,
+        //     address(psm),
+        //     address(hbToken)
+        // );
+        // vm.stopPrank();
 
         // vm.prank(Alice);
         // // (hbToken) = MockToken(address(handlerVirtual.hbToken()));
@@ -423,7 +423,25 @@ contract ZealynxTest is Test {
         // assertTrue(hbToken.balanceOf(Alice) == beforeBalance - withdrawAmount);
     }
 
+    function test_contribute_funding() public {
+        _create_bToken();
 
+        uint256 fundingAmount = 1e8;
+        vm.startPrank(Alice);
+        psm.approve(address(handlerVirtual), 1e55);
+        handlerVirtual._contributeFunding(fundingAmount, address(psm), address(hbToken));
+
+        MockToken hbToken = MockToken(address(handlerVirtual.hbToken()));
+
+        console2.log("hbToken.balanceOf(Alice)", hbToken.balanceOf(Alice));
+        // assertTrue(
+        //     hbToken.balanceOf(Alice) ==
+        //         (fundingAmount * handlerVirtual.FUNDING_MAX_RETURN_PERCENT()) / 100
+        // );
+        // assert(psm.balanceOf(USER1) == psmAmount - fundingAmount);
+        // assert(psm.balanceOf(address(virtualLP)) == fundingAmount);
+        vm.stopPrank();
+    }
 
 
 

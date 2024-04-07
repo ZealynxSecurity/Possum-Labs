@@ -37,17 +37,34 @@ contract HandlerVirtual is VirtualLP {
     uint256 public _fundingBalance;
     bool public _isActiveLP;
     bool public _bTokenCreated; 
+    // address public bTokenAddress; // the address of the receipt token
 
     mapping(address portal => bool isRegistered) public _registeredPortals;
     mapping(address portal => mapping(address asset => address vault)) public _vaults;
     mapping(address portal => mapping(address asset => uint256 pid)) public _poolID;
 
     uint256 constant _MAX_UINT = 115792089237316195423570985008687907853269984665640564039457584007913129639935;
-
+    MockToken public hbToken;
 
     constructor(address _tokenAddress, uint256 _FUNDING_MIN_AMOUNT)
         VirtualLP(_tokenAddress, _AMOUNT_TO_CONVERT,_FUNDING_PHASE_DURATION, _FUNDING_MIN_AMOUNT) {}
 
+    function _handler_create_bToken() external inactiveLP {
+        if (bTokenCreated) {
+            revert TokenExists();
+        }
+
+        /// @dev Update the token creation flag to prevent future calls.
+        bTokenCreated = true;
+
+        /// @dev Set the token name and symbol
+        string memory name = "bVaultkaLending";
+        string memory symbol = "bVKA-L";
+
+        /// @dev Deploy the token and update the related storage variable so that other functions can work.
+        hbToken = new MockToken(name, symbol);
+        // bTokenAddress = address(bToken);
+    }
 
     function _contributeFunding(uint256 _amount, address psm, address hbToken) external {
         /// @dev Prevent zero amount transaction

@@ -324,7 +324,7 @@ contract ZealynxTest is Test {
         MockToken(psm).approve(address(virtualLP), 1e55);
 
         vm.prank(Alice);
-        handlerVirtual.contributeFunding(fundingAmount);
+        handlerVirtual._contributeFunding(fundingAmount, address(psm), address(hbToken));
     }
 
     function prepare_convert() internal {
@@ -380,7 +380,19 @@ contract ZealynxTest is Test {
         uint256 withdrawAmount = (_amount *
             FUNDING_MAX_RETURN_PERCENT) / 1000;
 
-        prepare_convert();
+        vm.prank(Alice);
+        prepare_contribution();
+
+        // Precondition
+        _fundLP();
+        _activateLP();
+
+        // Action
+        helper_sendUSDCtoLP();
+        vm.prank(Alice);
+        MockToken(psm).approve(address(virtualLP), 1e55);
+        
+        vm.prank(Alice);
         handlerVirtual.convert(
             address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
             msg.sender,

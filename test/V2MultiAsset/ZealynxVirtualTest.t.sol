@@ -390,16 +390,19 @@ contract ZealynxTest is Test {
 
         // Action
         helper_sendUSDCtoLP();
-        // vm.prank(Alice);
-        // MockToken(psm).approve(address(virtualLP), 1e55);
+        vm.prank(Alice);
+        MockToken(psm).approve(address(virtualLP), 1e55);
         
-        // vm.prank(Alice);
-        // handlerVirtual.convert(
-        //     address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-        //     msg.sender,
-        //     1,
-        //     block.timestamp
-        // );
+        vm.startPrank(Alice);
+        handlerVirtual._handler_convert(
+            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
+            msg.sender,
+            1,
+            block.timestamp,
+            address(psm),
+            address(hbToken)
+        );
+        vm.stopPrank();
 
         // vm.prank(Alice);
         // // (hbToken) = MockToken(address(handlerVirtual.hbToken()));

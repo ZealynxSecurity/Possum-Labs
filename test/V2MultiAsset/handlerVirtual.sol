@@ -6,6 +6,8 @@ import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
 import {MockToken} from "./mocks/MockToken.sol";
 import {esVKAToken} from "src/onchain/esVKAToken.sol";
 
+import {console2} from "forge-std/Test.sol";
+
 
 
 // ============================================
@@ -168,10 +170,24 @@ contract HandlerVirtual is VirtualLP {
         /// @dev Calculate the burn value of 1 full bToken in PSM
         /// @dev Add 1 WEI to handle rounding issue in the next step
         uint256 burnValueFullToken = _handler_getBurnValuePSM(1e18) + 1;
-
+        console2.log("fundingRewardPool", fundingRewardPool);
         /// @dev Calculate and return the amount of bTokens burnable
         /// @dev This will slightly underestimate because of the 1 WEI for reliability reasons
         amountBurnable = (fundingRewardPool * 1e18) / burnValueFullToken;
+    }
+
+    function _handler_Modify_getBurnableBtokenAmount(uint256 _fundingRewardPool) //@audit => Modify
+        public
+        view
+        returns (uint256 amountBurnable)
+    {
+        /// @dev Calculate the burn value of 1 full bToken in PSM
+        /// @dev Add 1 WEI to handle rounding issue in the next step
+        uint256 burnValueFullToken = _handler_getBurnValuePSM(1e18) + 1;
+        console2.log("fundingRewardPool", _fundingRewardPool);
+        /// @dev Calculate and return the amount of bTokens burnable
+        /// @dev This will slightly underestimate because of the 1 WEI for reliability reasons
+        amountBurnable = (_fundingRewardPool * 1e18) / burnValueFullToken;
     }
 
     function _handler_burnBtokens(uint256 _amount, address hbToken, address psm) external {
@@ -182,6 +198,34 @@ contract HandlerVirtual is VirtualLP {
 
         /// @dev Check that the burn amount is not larger than what can be redeemed
         uint256 burnable = _handler_getBurnableBtokenAmount();
+        if (_amount > burnable) {
+            revert InvalidAmount();
+        }
+
+        /// @dev Calculate how many PSM the user receives based on the burn amount
+        uint256 amountToReceive = _handler_getBurnValuePSM(_amount);
+
+        /// @dev Reduce the funding reward pool by the amount of PSM payable to the user
+        fundingRewardPool -= amountToReceive;
+
+        /// @dev Burn the bTokens from the user's balance
+        MockToken(hbToken).burnFrom(msg.sender, _amount);
+
+        /// @dev Transfer the PSM to the user
+        MockToken(psm).transfer(msg.sender, amountToReceive);
+
+        /// @dev Event that informs about burn amount and received PSM by the caller
+        emit RewardsRedeemed(msg.sender, _amount, amountToReceive);
+    }
+
+    function _handler_Modify_burnBtokens(uint256 _amount, address hbToken, address psm, uint256 _burnable) external { //@audit => Modify
+        /// @dev Check that the burn amount is not zero
+        if (_amount == 0) {
+            revert InvalidAmount();
+        }
+
+        /// @dev Check that the burn amount is not larger than what can be redeemed
+        uint256 burnable = _handler_Modify_getBurnableBtokenAmount(_burnable);
         if (_amount > burnable) {
             revert InvalidAmount();
         }

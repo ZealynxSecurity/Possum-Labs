@@ -1,6 +1,0 @@
-Reverted? true 
- Txn:
-[38;2;156;133;16m[Sender] 0xe1A425f1AC34A8a441566f93c82dD730639c8510[0m
-   ├─[1] [38;2;35;237;34m0xBb4c00a6D80C34f9136b01A983C8d874f123ED22[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()
-   ├─[1] [38;2;35;237;34m0xBb4c00a6D80C34f9136b01A983C8d874f123ED22[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()
-   │  └─ ← 0x2176321d

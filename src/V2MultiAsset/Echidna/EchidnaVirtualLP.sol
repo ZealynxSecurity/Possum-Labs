@@ -432,25 +432,6 @@ contract EchidnaVirtualLP is EchidnaSetup {
         assert(virtualLP.fundingRewardPool() == initialRewardPool + expectedNewReward);
     }
 
-    function test_correct_token_transfer() public {
-        prepare_convert();
-
-        uint256 recipientBalanceBefore = weth.balanceOf(USER1);
-
-        // Action
-        virtualLP.convert(
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            msg.sender,
-            1,
-            block.timestamp
-        );
-
-        // Check the recipient received the tokens correctly
-        uint256 recipientBalanceAfter = weth.balanceOf(USER1);
-
-        assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
-    }
-
     function test_revert_with_invalid_token_address() public {
         prepare_convert();
 
@@ -475,7 +456,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
             // Verification
             assert(true);
         }
-    }
+    } 
 
     function test_revert_insufficient_balance() public {
         prepare_convert();

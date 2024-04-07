@@ -349,7 +349,7 @@ contract ZealynxVirtualLPTest is FoundrySetup {
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
             msg.sender,
             1,
-            block.timestamp
+            block.timestamp 
         );
     }
 
@@ -375,7 +375,8 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         uint256 initialRewardPool = virtualLP.fundingRewardPool();
 
         // Action
-        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Alice, 100, block.timestamp + 1 days);
+        vm.prank(psmSender);
+        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Alice, 1, block.timestamp + 1 days);
 
         // Verification
         uint256 expectedNewReward = (_AMOUNT_TO_CONVERT * FUNDING_REWARD_SHARE) / 100;
@@ -415,7 +416,7 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         vm.warp(block.timestamp + 2 days);
 
         // Action
-        vm.expectRevert(ErrorsLib.InsufficientReceived.selector);
+        vm.expectRevert(ErrorsLib.DeadlineExpired.selector);
         virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Alice, 100, block.timestamp - 1 days);
     }
 
@@ -423,6 +424,21 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         prepare_convert();
 
         // Action
+        vm.expectRevert(ErrorsLib.InsufficientReceived.selector);
         virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Alice, 1e18, block.timestamp + 1 days);
+    }
+
+    ///////////////////////////////////////////////
+    ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
+
+    function test_fuzz_convert(uint256 _deadline) public {
+        // Precondition
+        vm.assume(_deadline != 0);
+        vm.assume(_deadline < 1e10);
+        prepare_convert();
+
+        // Action
+        virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Bob, 1, block.timestamp + _deadline);
     }
 }

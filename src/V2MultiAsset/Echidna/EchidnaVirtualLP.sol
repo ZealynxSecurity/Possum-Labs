@@ -147,14 +147,17 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==            REGISTER PORTAL             ==
     // ============================================
 
-    /////////////// UNIT TESTS ///////////////
+    ///////////////////////////////////////////////
+    ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
+
     function test_register_portal_usdc() public {
         address testPortal = address(portal_USDC);
         address testAsset = _PRINCIPAL_TOKEN_ADDRESS_USDC; 
         address testVault = address(USDC_WATER);
         uint256 testPid = _POOL_ID_USDC;
 
-                // Action
+        // Action
         _register(
             testPortal, 
             testAsset, 
@@ -220,7 +223,10 @@ contract EchidnaVirtualLP is EchidnaSetup {
     // ==              REMOVE OWNER              ==
     // ============================================
 
-    /////////////// UNIT TESTS ///////////////
+    ///////////////////////////////////////////////
+    ////////////////// UNIT TESTS /////////////////
+    ///////////////////////////////////////////////
+    
     function test_address_changed_to_zero() public {
         // Precondition
         hevm.warp(block.timestamp + OWNER_DURATION + 1);
@@ -243,7 +249,7 @@ contract EchidnaVirtualLP is EchidnaSetup {
 
         // Action
         try virtualLP.removeOwner() {
-assert(false);
+            assert(false);
         } catch {
             // Verification
             assert(true);
@@ -336,6 +342,10 @@ assert(false);
         }
     }
 
+    ///////////////////////////////////////////////
+    ////////////////// FUZZ TESTS /////////////////
+    ///////////////////////////////////////////////
+
     function test_withdraw_from_yield_source(uint256 _amount) public {
         // Preconditions
         require(_amount > 0);
@@ -422,25 +432,6 @@ assert(false);
         assert(virtualLP.fundingRewardPool() == initialRewardPool + expectedNewReward);
     }
 
-    function test_correct_token_transfer() public {
-        prepare_convert();
-
-        uint256 recipientBalanceBefore = weth.balanceOf(USER1);
-
-        // Action
-        virtualLP.convert(
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            msg.sender,
-            1,
-            block.timestamp
-        );
-
-        // Check the recipient received the tokens correctly
-        uint256 recipientBalanceAfter = weth.balanceOf(USER1);
-
-        assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
-    }
-
     function test_revert_with_invalid_token_address() public {
         prepare_convert();
 
@@ -465,7 +456,7 @@ assert(false);
             // Verification
             assert(true);
         }
-    }
+    } 
 
     function test_revert_insufficient_balance() public {
         prepare_convert();

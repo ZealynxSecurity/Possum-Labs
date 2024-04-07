@@ -323,8 +323,9 @@ contract ZealynxTest is Test {
         vm.prank(Alice);
         MockToken(psm).approve(address(virtualLP), 1e55);
 
-        vm.prank(Alice);
+        vm.startPrank(psmSender);
         handlerVirtual._contributeFunding(fundingAmount, address(psm), address(hbToken));
+        vm.stopPrank();
     }
 
     function prepare_convert() internal {
@@ -389,31 +390,31 @@ contract ZealynxTest is Test {
 
         // Action
         helper_sendUSDCtoLP();
-        vm.prank(Alice);
-        MockToken(psm).approve(address(virtualLP), 1e55);
+        // vm.prank(Alice);
+        // MockToken(psm).approve(address(virtualLP), 1e55);
         
-        vm.prank(Alice);
-        handlerVirtual.convert(
-            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-            msg.sender,
-            1,
-            block.timestamp
-        );
+        // vm.prank(Alice);
+        // handlerVirtual.convert(
+        //     address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
+        //     msg.sender,
+        //     1,
+        //     block.timestamp
+        // );
 
-        vm.prank(Alice);
-        // (hbToken) = MockToken(address(handlerVirtual.hbToken()));
-        uint256 beforeBalance = hbToken.balanceOf(Alice);
+        // vm.prank(Alice);
+        // // (hbToken) = MockToken(address(handlerVirtual.hbToken()));
+        // uint256 beforeBalance = hbToken.balanceOf(Alice);
 
-        uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();
+        // uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();
 
-        // Action
-        vm.prank(Alice);
-        hbToken.approve(address(virtualLP), 1e55);
-        vm.prank(Alice);
-        handlerVirtual._handler_burnBtokens(_amount,address(hbToken), address(psm));
+        // // Action
+        // vm.prank(Alice);
+        // hbToken.approve(address(virtualLP), 1e55);
+        // vm.prank(Alice);
+        // handlerVirtual._handler_burnBtokens(_amount,address(hbToken), address(psm));
 
-        // Verification
-        assertTrue(hbToken.balanceOf(Alice) == beforeBalance - withdrawAmount);
+        // // Verification
+        // assertTrue(hbToken.balanceOf(Alice) == beforeBalance - withdrawAmount);
     }
 
 

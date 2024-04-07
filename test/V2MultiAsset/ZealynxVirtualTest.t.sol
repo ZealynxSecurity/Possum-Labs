@@ -167,6 +167,9 @@ contract ZealynxTest is Test {
         psm.approve(address(handlerVirtual), mintAmount);
         vm.stopPrank();
 
+        vm.prank(Alice);
+        psm.approve(address(handlerVirtual), mintAmount);
+        
         // Mintear tokens USDC a usdcSender
         vm.prank(usdcSender);
         usdc.mint(usdcSender, mintAmount);

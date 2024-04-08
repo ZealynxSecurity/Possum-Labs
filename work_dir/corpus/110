@@ -1,0 +1,10 @@
+Reverted? false 
+ Txn:
+[38;2;211;29;219m[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m
+   └─[1] [38;2;119;29;214m0xa35400E548b329BDF4580b4930B47A7C2c771Dd6[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()
+[38;2;156;133;16m[Sender] 0xe1A425f1AC34A8a441566f93c82dD730639c8510[0m
+   └─[1] [38;2;106;168;179m0x451E0007b496277bDbdD4eAe3349Cd78816Aa8b3[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()
+[38;2;211;29;219m[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_register_portal_usdc[0m()
+[38;2;156;133;16m[Sender] 0xe1A425f1AC34A8a441566f93c82dD730639c8510[0m
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_revert_register_portal_not_owner[0m()

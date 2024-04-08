@@ -1,0 +1,6 @@
+Reverted? true 
+ Txn:
+[38;2;211;29;219m[Sender] 0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m
+   ├─[1] [38;2;119;29;214m0xa35400E548b329BDF4580b4930B47A7C2c771Dd6[0m.[38;2;255;123;114mupdateMaxLockDuration[0m()
+   ├─[1] [38;2;173;97;226m0x689d00B1F6AFCdb2F20bb1d110AbbA3E59ad61e2[0m.[38;2;255;123;114mclaimProtocolRewards[0m([38;2;211;29;219m0x35c9dfd76bf02107ff4f7128Bd69716612d31dDb[0m)
+   │  │  └─[3] [38;2;173;97;226m0x689d00B1F6AFCdb2F20bb1d110AbbA3E59ad61e2[0m.[38;2;255;123;114mclaimProtocolRewards[0m([38;2;106;168;179m0x451E0007b496277bDbdD4eAe3349Cd78816Aa8b3[0m)

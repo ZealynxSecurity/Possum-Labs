@@ -1,0 +1,1 @@
+{"data":[[0,{"call_type":"FirstLevelCall","caller":"0x35c9dfd76bf02107ff4f7128bd69716612d31ddb","contract":"test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496)","input":"1026ec94","value":"0","source":{"file":"test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol","file_idx":77,"offset":872,"length":18503},"results":""}]]}

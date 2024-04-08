@@ -1,0 +1,4 @@
+Reverted? true 
+ Txn:
+[38;2;220;144;36m[Sender] 0x68Dd4F5AC792eAaa5e36f4f4e0474E0625dc9024[0m
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_revert_insufficient_balance[0m()

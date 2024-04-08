@@ -1,0 +1,2 @@
+[FirstLevelCall][0x35c9dfd76bf02107ff4f7128bd69716612d31ddb -> test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496)] (dc175642) > ()
+  [Call][test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496) -> src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x689d00b1f6afcdb2f20bb1d110abba3e59ad61e2)] (7545c320) > ()

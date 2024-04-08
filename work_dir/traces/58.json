@@ -1,0 +1,1 @@
+{"data":[[0,{"call_type":"FirstLevelCall","caller":"0x8ef508aca04b32ff3ba5003177cb18bfa6cd79dd","contract":"src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x689d00b1f6afcdb2f20bb1d110abba3e59ad61e2)","input":"246f8b96","value":"0","source":{"file":"src/V2MultiAsset/VirtualLP.sol","file_idx":64,"offset":2142,"length":29287},"results":""}]]}

@@ -1,0 +1,16 @@
+Contract: src/V2MultiAsset/PortalV2MultiAsset.sol:PortalV2MultiAsset(0xa35400e548b329bdf4580b4930b47a7c2c771dd6)
+Instruction Coverage: 2193/13884 (15.80%) 
+Branch Coverage: 107/742 (14.42%) 
+--------------------------------
+Contract: src/V2MultiAsset/PortalV2MultiAsset.sol:PortalV2MultiAsset(0x451e0007b496277bdbdd4eae3349cd78816aa8b3)
+Instruction Coverage: 1577/13884 (11.36%) 
+Branch Coverage: 72/742 (9.70%) 
+--------------------------------
+Contract: test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496)
+Instruction Coverage: 2005/38282 (5.24%) 
+Branch Coverage: 97/2016 (4.81%) 
+--------------------------------
+Contract: src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x689d00b1f6afcdb2f20bb1d110abba3e59ad61e2)
+Instruction Coverage: 2743/10646 (25.77%) 
+Branch Coverage: 121/546 (22.16%) 
+--------------------------------

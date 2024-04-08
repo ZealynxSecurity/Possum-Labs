@@ -1,0 +1,1 @@
+{"data":[[0,{"call_type":"FirstLevelCall","caller":"0x68dd4f5ac792eaaa5e36f4f4e0474e0625dc9024","contract":"src/V2MultiAsset/PortalV2MultiAsset.sol:PortalV2MultiAsset(0x451e0007b496277bdbdd4eae3349cd78816aa8b3)","input":"cdfbe576","value":"0","source":{"file":"src/V2MultiAsset/PortalV2MultiAsset.sol","file_idx":63,"offset":2313,"length":32853},"results":""}]]}

@@ -1,0 +1,4 @@
+Reverted? false 
+ Txn:
+[38;2;156;133;16m[Sender] 0xe1A425f1AC34A8a441566f93c82dD730639c8510[0m
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_register_portal_eth[0m()

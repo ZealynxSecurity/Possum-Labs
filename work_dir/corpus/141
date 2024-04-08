@@ -1,0 +1,7 @@
+Reverted? true 
+ Txn:
+[38;2;205;121;221m[Sender] 0x8EF508Aca04B32Ff3ba5003177cb18BfA6Cd79dd[0m
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_address_changed_to_zero[0m()
+[38;2;220;144;36m[Sender] 0x68Dd4F5AC792eAaa5e36f4f4e0474E0625dc9024[0m
+   ├─[1] [38;2;191;226;90m0x23d4b5F3e65b826888969145ca3CAA7DEcBFe25a[0m.[38;2;255;123;114munstake[0m(1237940039.2853 ether)
+   │  └─ ← 0x263892ab

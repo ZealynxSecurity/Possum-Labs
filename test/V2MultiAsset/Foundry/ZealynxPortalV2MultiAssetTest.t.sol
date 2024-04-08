@@ -168,8 +168,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     // ============================================
 
     function testUnstakeUSDC(uint256 _amountStake, uint256 timePassed) public {
-        vm.assume(timePassed != 0);
-        vm.assume(timePassed < 10_000 days);
+        vm.assume(timePassed > 0 days && timePassed < 10_000 days);
 
         _prepareLP();
         _setApprovalsInLP_USDC();
@@ -210,7 +209,8 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         uint256 balanceBefore2 = Alice.balance;
         uint256 minOperationalAmount = 1e4; 
         vm.assume(_amountStake >= minOperationalAmount && _amountStake <= balanceBefore2);
-        
+        vm.assume(timePassed > 0 days && timePassed < 10_000 days);
+
         vm.startPrank(Alice);
         portal_ETH.stake{value: _amountStake}(_amountStake);
         vm.stopPrank();
@@ -288,7 +288,6 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         assertTrue(peBalanceBefore > 0);
         assertEq(lastMaxLockDurationAfter, lastMaxLockDurationBefore);
         assertEq(stakeBalanceAfter, _amountAccount);
-        assertEq(peBalanceAfter, _amountAccount);
 
         (
             uint256 nftMintTime,

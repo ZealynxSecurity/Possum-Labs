@@ -1,0 +1,2 @@
+[FirstLevelCall][0x8ef508aca04b32ff3ba5003177cb18bfa6cd79dd -> src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb584b800abef778a46d4d0f0e77c92855b28)] (6e5d5b02000000000000000000000000e1a425f1ac34a8a441566f93c82dd730639c8510) > ()
+  [StaticCall][src/V2MultiAsset/VirtualLP.sol:VirtualLP(0x78edb584b800abef778a46d4d0f0e77c92855b28) -> 0xe1a425f1ac34a8a441566f93c82dd730639c8510] (4e7ce35d) > ()

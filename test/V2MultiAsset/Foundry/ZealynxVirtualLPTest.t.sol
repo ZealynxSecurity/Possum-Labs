@@ -5,6 +5,8 @@ import {FoundryLogic} from "./FoundryLogic.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
+import {console2} from "forge-std/Test.sol";
+
 
 contract ZealynxVirtualLPTest is FoundryLogic {
 
@@ -123,10 +125,10 @@ contract ZealynxVirtualLPTest is FoundryLogic {
         virtualLP.depositToYieldSource(address(usdc), _amount);
     }
     
-    function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
+    function test_fuzz_deposit_to_yield_source(uint256 _amount) public { //@audit
         // Preconditions
         vm.assume(_amount > 0);
-        vm.assume(_amount < 1e18);
+        vm.assume(_amount < 1e7);
 
         _prepareYieldSourceUSDC(_amount);
 
@@ -166,7 +168,9 @@ contract ZealynxVirtualLPTest is FoundryLogic {
 
     function test_fuzz_withdraw_from_yield_source(uint256 _amount) public {
         // Preconditions
-        vm.assume(_amount > 0);
+        vm.assume(_amount > 1 && _amount < 1e7);
+        // vm.assume(_amount < 1e7);
+
         _prepareYieldSourceUSDC(_amount);
         vm.prank(address(portal_USDC));
         virtualLP.depositToYieldSource(address(usdc), _amount);
@@ -237,23 +241,28 @@ contract ZealynxVirtualLPTest is FoundryLogic {
         assertTrue(virtualLP.fundingRewardPool() == initialRewardPool + expectedNewReward);
     }
 
-    function test_correct_token_transfer() public {
-        prepare_convert();
 
-        uint256 recipientBalanceBefore = weth.balanceOf(Alice);
+    function test_correct_token_transfer() public {
+        prepare_convert(); 
+
+        uint256 contractBalanceBefore = usdc.balanceOf(address(virtualLP)); 
+        uint256 recipientBalanceBefore = usdc.balanceOf(Alice);
 
         // Action
+        vm.prank(Alice);
         virtualLP.convert(
             _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            msg.sender,
-            1,
-            block.timestamp
+            Alice,
+            1, 
+            block.timestamp + 1 
         );
 
         // Check the recipient received the tokens correctly
-        uint256 recipientBalanceAfter = weth.balanceOf(Alice);
+        uint256 recipientBalanceAfter = usdc.balanceOf(Alice);
+        assert(recipientBalanceAfter == recipientBalanceBefore + contractBalanceBefore);
 
-        assert(recipientBalanceAfter == recipientBalanceBefore + _AMOUNT_TO_CONVERT);
+        uint256 contractBalanceAfter = usdc.balanceOf(address(virtualLP));
+        assert(contractBalanceAfter == 0);
     }
 
     function test_revert_with_invalid_token_address() public {

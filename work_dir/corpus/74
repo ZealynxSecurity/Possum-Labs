@@ -1,6 +1,4 @@
 Reverted? true 
  Txn:
 [38;2;220;144;36m[Sender] 0x68Dd4F5AC792eAaa5e36f4f4e0474E0625dc9024[0m
-   ├─[1] [38;2;134;107;241m0xA035B5d467a5014295Eb87DFA5882921a2866BF1[0m.[38;2;255;123;114mremoveOwner[0m()
-   ├─[1] [38;2;134;107;241m0xA035B5d467a5014295Eb87DFA5882921a2866BF1[0m.[38;2;255;123;114mremoveOwner[0m()
-   │  └─ ← 0xf7a99d01
+   └─[1] [38;2;62;20;150m0x7FA9385bE102ac3EAc297483Dd6233D62b3e1496[0m.[38;2;255;123;114mtest_fuzz_deposit_to_yield_source[0m(0)

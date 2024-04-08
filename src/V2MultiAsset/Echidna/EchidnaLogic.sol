@@ -128,7 +128,7 @@ contract EchidnaLogic is EchidnaSetup {
         address testAsset,
         address testVault,
         uint256 testPid
-    ) internal {
+    ) internal view {
         assert(virtualLP.registeredPortals(testPortal) == true);
         assert(virtualLP.vaults(testPortal, testAsset) == testVault);
         assert(virtualLP.poolID(testPortal, testAsset) == testPid); 

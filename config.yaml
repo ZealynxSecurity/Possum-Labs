@@ -8,7 +8,7 @@ workers: 3
 seqLen: 100
 testLimit: 100000
 
-balanceContract: 1000000000000000000000000 # 100 ether
+balanceContract: 1e18
 
 rpcUrl: 'https://arb-mainnet.g.alchemy.com/v2/3SkKWYW6eyZV1DvJIEIKfdY99xWS1U-P'
 rpcBlock: 195078119

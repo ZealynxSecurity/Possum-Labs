@@ -128,7 +128,7 @@ contract EchidnaSetup is EchidnaConfig {
         psm.transfer(USER1, psmAmount);
         hevm.prank(usdcSender);
         usdc.transfer(USER1, usdcAmount);
-
+        
         hevm.prank(psmSender);
         psm.transfer(USER2, psmAmount);
         hevm.prank(usdcSender);

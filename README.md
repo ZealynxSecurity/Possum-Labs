@@ -1,4 +1,15 @@
 
+| Section | Description |
+|---------|-------------|
+| [Installation](#installation) | Setup and installation requirements. |
+| [Init](#init) | Initial setup and build commands. |
+| [Where to Find the Tests](#where-to-find-the-tests) | Locations of different test suites. |
+| [Testing Environments](#testing-environments) | Overview of testing environments: Foundry, Echidna, Halmos, and Ityfuzz. |
+| [Foundry Tests](#foundry-tests) | How to run Foundry tests and where to find them. |
+| [Echidna Tests](#echidna-tests) | Setup and execution of Echidna tests. |
+| [Halmos Tests](#halmos-tests) | Information on setting up and running Halmos tests. |
+| [Ityfuzz Tests](#ityfuzz-tests) | Details on Ityfuzz testing environment and usage. |
+| [Test Coverage](#test-coverage) | Test coverage information for various contracts and functionalities. |
 
 ## Installation
 
@@ -19,10 +30,13 @@ sudo forge build -force
 ```
 ### You can find more information on this repository:
 - [Example implementation](https://github.com/ZealynxSecurity/Zealynx/blob/main/OurWork/Fuzzing-and-Formal-Verification/public-contests/Olas%20Protocol/Readme-Olas.md)
+- [Example implementation](https://github.com/ZealynxSecurity/BastionWallet)
 
 ## Where to find the tests
 
 You can find the tests in various folders:
+
+`The "onchain" folder is used to compile Halmos tests as they are configured through mocks since native FV testing is not available for onchain contracts`
 
 - Echidna in the `src/V2MultiAsset/Echidna` folder
 - Foundry in the `test/V2MultiAsset/Foundry` folder
@@ -173,7 +187,7 @@ ityfuzz evm -m ItyfuzzVirtuaLp -- forge build
 
 # Test Coverage
 
-
+`To view Foundry coverage, delete the "onchain" folder and comment out the Halmos folder`
 
 ## Echidna
 

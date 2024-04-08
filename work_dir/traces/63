@@ -1,3 +1,0 @@
-[FirstLevelCall][0xe1a425f1ac34a8a441566f93c82dd730639c8510 -> test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496)] (3d30a10d) > ()
-  [Call][test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol:ItyfuzzVirtuLp(0x7fa9385be102ac3eac297483dd6233d62b3e1496) -> src/V2MultiAsset/VirtualLP.sol:VirtualLP(0xe81d0039fe5bbe59fc3c55bef02979a6752ba184)] (07d61092) > ()
-    [StaticCall][src/V2MultiAsset/VirtualLP.sol:VirtualLP(0xe81d0039fe5bbe59fc3c55bef02979a6752ba184) -> 0x95b3f9797077ddca971ab8524b439553a220eb2a] (dd62ed3e000000000000000000000000e81d0039fe5bbe59fc3c55bef02979a6752ba18400000000000000000000000031fa38a6381e9d1f4770c73ab14a0ced1528a65e) > ()

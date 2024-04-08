@@ -4,7 +4,7 @@ pragma solidity 0.8.19;
 
 
 import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
-import {MockToken} from "./mocks/HMockToken.sol";
+import {MockToken} from "../mocks/HMockToken.sol";
 import {esVKAToken} from "src/onchain/esVKAToken.sol";
 
 import {console2} from "forge-std/Test.sol";

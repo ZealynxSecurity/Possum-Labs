@@ -5,15 +5,15 @@ import {Test, console2} from "forge-std/Test.sol";
 import {PortalV2MultiAsset} from "src/V2MultiAsset/PortalV2MultiAsset.sol";
 import {MintBurnToken} from "src/V2MultiAsset/MintBurnToken.sol";
 import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
-import {ErrorsLib} from "./libraries/ErrorsLib.sol";
-import {EventsLib} from "./libraries/EventsLib.sol";
+import {ErrorsLib} from "../libraries/ErrorsLib.sol";
+import {EventsLib} from "../libraries/EventsLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 import {IDualStaking} from "src/V2MultiAsset/interfaces/IDualStaking.sol";
 import {IPortalV2MultiAsset} from "src/V2MultiAsset/interfaces/IPortalV2MultiAsset.sol";
 
-import{MockToken} from "./mocks/MockToken.sol";
+import{MockToken} from "../mocks/HMockToken.sol";
 
 import {SingleStakingV2} from "src/onchain/SingleStakingV2.sol";
 import {EthWater} from "src/onchain/Water.sol";

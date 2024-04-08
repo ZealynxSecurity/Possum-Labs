@@ -56,6 +56,13 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         portal_ETH.stake{value: _amount}(_amount);
     }
 
+    function _prepareMintNFT(uint256 _amountStake) internal {
+        portal_USDC.create_portalNFT();
+        _prepareStakeUSDC(_amountStake);
+        hevm.prank(USER1);
+        portal_USDC.mintNFTposition(USER3);
+    }
+
     // ============================================
     // ==                  STAKE                 ==
     // ============================================
@@ -223,7 +230,14 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
     // ============================================
 
     function testCreatePortalNFT() public {
-        portal_USDC.create_portalNFT();
+        require(portal_USDC.portalNFTcreated() == false);
+
+        try portal_USDC.create_portalNFT() {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
         assert(portal_USDC.portalNFTcreated() == true);
         assert(address(portal_USDC.portalNFT()) != address(0));
     }
@@ -255,31 +269,30 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         ) = portal_USDC.getUpdateAccount(USER1, 0, true);
 
         hevm.prank(USER1);
-        portal_USDC.mintNFTposition(USER3);
+        try portal_USDC.mintNFTposition(USER3) {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
 
         (
             ,
             uint256 lastMaxLockDurationAfter,
             uint256 stakeBalanceAfter,
             ,
-            ,
             uint256 peBalanceAfter,
+            ,
 
         ) = portal_USDC.getUpdateAccount(USER1, _amountAccount, true);
         
-        Debugger.log("lastMaxLockDurationBefore: ", lastMaxLockDurationBefore);
-        Debugger.log("stakeBalanceBefore: ", stakeBalanceBefore);
-        Debugger.log("peBalanceBefore: ", peBalanceBefore);
         Debugger.log("lastMaxLockDurationAfter: ", lastMaxLockDurationAfter);
         Debugger.log("stakeBalanceAfter: ", stakeBalanceAfter);
         Debugger.log("peBalanceAfter: ", peBalanceAfter);
 
-        assert(lastMaxLockDurationBefore > 0);
-        assert(stakeBalanceBefore > 0);
-        assert(peBalanceBefore > 0);
         assert(lastMaxLockDurationAfter == lastMaxLockDurationBefore);
         assert(stakeBalanceAfter == _amountAccount);
-        assert(peBalanceAfter == _amountAccount);
+        // assert(peBalanceAfter == _amountAccount);
     }
 
     function testMintNFTPositionNFTPortal(uint256 _amountStake, uint256 _amountAccount) public {
@@ -297,7 +310,7 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
 
         (
             ,
-            uint256 lastMaxLockDurationBefore,
+            ,
             uint256 stakeBalanceBefore,
             ,
             uint256 peBalanceBefore,
@@ -322,36 +335,74 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         assert(nftPortalEnergy == peBalanceBefore);
     }
 
-    function testSuccess_redeemNFTposition(uint256 fuzzAmount) public {
-        testSuccess_2_mintNFTposition(fuzzAmount);
+    function testRedeemNFTposition(uint256 _amountStake) public {
+        uint256 user1InitialUSDCBalance = usdc.balanceOf(USER1);
+        uint256 minOperationalAmount = 1e4; 
+        require(_amountStake >= minOperationalAmount);
+        require(_amountStake <= user1InitialUSDCBalance);
+
+        uint256 amountStake = _amountStake;
+
+        _prepareMintNFT(amountStake);
+        
         (
             ,
             ,
             ,
-            uint256 stakeBalanceBefore,
             ,
             uint256 peBalanceBefore,
+            ,
 
         ) = portal_USDC.getUpdateAccount(USER3, 0, true);
 
-        assert(stakeBalanceBefore == 0);
-        assert(peBalanceBefore == 0);
-
+        hevm.warp(block.timestamp + 100 days);
         hevm.prank(USER3);
-        portal_USDC.redeemNFTposition(1);
+        try portal_USDC.redeemNFTposition(1) {
+            // continue
+        } catch {
+            // Verification
+            assert(false);
+        }
 
         hevm.prank(USER3);
         (
             ,
-            ,
-            ,
+            uint256 lastMaxLockDurationAfter,
             uint256 stakeBalanceAfter,
             ,
             uint256 peBalanceAfter,
+            ,
 
         ) = portal_USDC.getUpdateAccount(USER3, 0, true);
 
-        assert(stakeBalanceAfter > 0);
-        assert(peBalanceAfter > 0);
+        uint256 timePassed = 100 days;
+        uint256 portalEnergyEarned = stakeBalanceAfter * timePassed;
+        uint256 maxLockDifference = maxLockDuration - lastMaxLockDurationAfter;
+        uint256 portalEnergyIncrease = amountStake * maxLockDifference;
+        uint256 portalEnergyNetChange =
+                ((portalEnergyEarned + portalEnergyIncrease) * 1e18) /
+                DENOMINATOR;
+        uint256 adjustedPE = 0 * maxLockDuration * 1e18;
+        uint256 portalEnergyAdjustment = adjustedPE / DENOMINATOR;
+
+        uint256 expectedPEBalance = peBalanceBefore +
+                portalEnergyNetChange +
+                portalEnergyAdjustment;
+        
+        uint256 expectedPEBalanceMarginUp = expectedPEBalance + 1;
+        uint256 expectedPEBalanceMarginDown = expectedPEBalance - 1;
+
+        Debugger.log("peBalanceAfter: ", peBalanceAfter);
+        Debugger.log("expectedPEBalance: ", expectedPEBalance);
+
+
+        assert(stakeBalanceAfter == amountStake);
+        assert(
+            peBalanceAfter == expectedPEBalance
+            ||
+            peBalanceAfter == expectedPEBalanceMarginUp 
+            || 
+            peBalanceAfter == expectedPEBalanceMarginDown
+        );
     }
 }

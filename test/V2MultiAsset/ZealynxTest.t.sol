@@ -664,8 +664,8 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
             uint256 lastMaxLockDurationAfter,
             uint256 stakeBalanceAfter,
             ,
-            ,
             uint256 peBalanceAfter,
+            ,
 
         ) = portal_USDC.getUpdateAccount(Alice, fuzzAmount2, true);
 
@@ -694,7 +694,7 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 //////////// testSuccess_2_mintNFTposition ////////////
 
     function testSuccess_2_mintNFTposition(uint256 fuzzAmount) public {
-        helper_createNFT();
+        helper_createNFT(); 
         // STAKE //
         helper_prepareSystem();
         helper_setApprovalsInLP_USDC();
@@ -725,8 +725,8 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
             uint256 lastMaxLockDurationAfter,
             uint256 stakeBalanceAfter,
             ,
-            ,
             uint256 peBalanceAfter,
+            ,
 
         ) = portal_USDC.getUpdateAccount(Alice, 0, true);
 
@@ -797,10 +797,10 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
         (
             ,
             ,
-            ,
             uint256 stakeBalanceBefore,
             ,
             uint256 peBalanceBefore,
+            ,
 
         ) = portal_USDC.getUpdateAccount(Karen, 0, true);
 
@@ -830,10 +830,10 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
         (
             ,
             ,
-            ,
             uint256 stakeBalanceBefore,
             ,
             uint256 peBalanceBefore,
+            ,
 
         ) = portal_USDC.getUpdateAccount(Karen, 0, true);
 
@@ -846,10 +846,10 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
         (
             ,
             ,
-            ,
             uint256 stakeBalanceAfter,
             ,
             uint256 peBalanceAfter,
+            ,
 
         ) = portal_USDC.getUpdateAccount(Karen, 0, true);
 

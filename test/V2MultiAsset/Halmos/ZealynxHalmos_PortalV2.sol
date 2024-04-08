@@ -13,7 +13,7 @@ import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 import {IDualStaking} from "src/V2MultiAsset/interfaces/IDualStaking.sol";
 import {IPortalV2MultiAsset} from "src/V2MultiAsset/interfaces/IPortalV2MultiAsset.sol";
 
-import{MockToken} from "../mocks/HMockToken.sol";
+import{MockToken} from "../mocks/HalmosMockToken.sol";
 
 import {SingleStakingV2} from "src/onchain/SingleStakingV2.sol";
 import {EthWater} from "src/onchain/Water.sol";
@@ -24,7 +24,7 @@ import {HandlerVirtual} from "./HandlerVirtual.sol";
 
 
 
-contract Halmos_ZealynxTest is SymTest, Test {
+contract ZealynxHalmos_PortalV2 is SymTest, Test {
 // External token addresses
 
     uint256 constant _POOL_ID_USDC = 5;

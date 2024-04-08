@@ -35,7 +35,4 @@ contract MockToken is ERC20, ERC20Burnable, ERC20Permit {
         _burn(account, amount);
     }
 
-    // function _transferFrom(address from, address to, uint256 amount) public {
-    //     transferFrom(from, to, amount);
-    // }
 }

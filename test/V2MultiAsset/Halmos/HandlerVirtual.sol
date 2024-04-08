@@ -32,7 +32,7 @@ error TimeLockActive();
 error NoProfit();
 error OwnerRevoked();
 
-contract ZealynxHalmosVirtual is VirtualLP {
+contract HandlerVirtual is VirtualLP {
 
     uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
     uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days

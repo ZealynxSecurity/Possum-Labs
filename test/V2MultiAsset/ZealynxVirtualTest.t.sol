@@ -25,22 +25,11 @@ import {HandlerPortalV2} from "./handlerPortalV2.t.sol";
 
 
 contract ZealynxTest is Test {
-// External token addresses
-    // address constant WETH_ADDRESS = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1; @audit-ok
-    // address public constant PSM_ADDRESS = 0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5; @audit-ok
-    // address constant esVKA = 0x95b3F9797077DDCa971aB8524b439553a220EB2A; @audit-ok
 
-    // Vaultka staking contracts
-    // address constant SINGLE_STAKING = 0x314223E2fA375F972E159002Eb72A96301E99e22; @audit-ok
-    // address constant DUAL_STAKING = 0x31Fa38A6381e9d1f4770C73AB14a0ced1528A65E; @audit-ok
 
     uint256 constant _POOL_ID_USDC = 5;
     uint256 constant _POOL_ID_WETH = 10;
 
-    // address private constant USDC_WATER = 0x9045ae36f963b7184861BDce205ea8B08913B48c;@audit-ok
-    // address private constant WETH_WATER =0x8A98929750e6709Af765F976c6bddb5BfFE6C06c; @audit-ok
-
-    // address private constant _PRINCIPAL_TOKEN_ADDRESS_USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831; @audit-ok
     address private constant _PRINCIPAL_TOKEN_ADDRESS_ETH = address(0);
 
     // General constants
@@ -176,7 +165,6 @@ contract ZealynxTest is Test {
         vm.prank(Alice);
         psm.approve(address(handlerVirtual), mintAmount);
         
-        // Mintear tokens USDC a usdcSender
         vm.prank(usdcSender);
         usdc.mint(usdcSender, mintAmount);
 
@@ -185,36 +173,27 @@ contract ZealynxTest is Test {
         uint256 transferAmountBob = 1e24; 
         uint256 transferAmountKaren = 1e23; 
 
-        // Transferir PSM a Alice
         vm.prank(psmSender);
         psm.transfer(Alice, transferAmountAlice);
-        // Transferir USDC a Alice
         vm.prank(usdcSender);
         usdc.transfer(Alice, transferAmountAlice);
 
-        // Transferir PSM a Bob
         vm.prank(psmSender);
         psm.transfer(Bob, transferAmountBob);
-        // Transferir USDC a Bob
         vm.prank(usdcSender);
         usdc.transfer(Bob, transferAmountBob);
 
-        // Transferir PSM a Karen
         vm.prank(psmSender);
         psm.transfer(Karen, transferAmountKaren);
-        // Transferir USDC a Karen
         vm.prank(usdcSender);
         usdc.transfer(Karen, transferAmountKaren);
 
-        // Además, si necesitas asegurar que Alice, Bob, y Karen tengan ETH para interactuar con la blockchain:
-        uint256 etherAmount = 1e65; // Cantidad de Ether para transferir, por ejemplo, 10 Ether
+        uint256 etherAmount = 1e65; 
 
-        // Proporcionar Ether a Alice, Bob, y Karen
         vm.deal(Alice, etherAmount);
         vm.deal(Bob, etherAmount);
         vm.deal(Karen, etherAmount);
 
-        // Finalmente, asegúrate de que las direcciones de los contratos también tengan ETH si es necesario
         vm.deal(address(psm), etherAmount);
         vm.deal(address(usdc), etherAmount);
         vm.deal(address(virtualLP), etherAmount);
@@ -223,266 +202,20 @@ contract ZealynxTest is Test {
     }
 
     // ============================================
-    // ==             HELPER ACTIONS             ==
-    // ============================================
-    function _register(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        // Precondition
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            testPortal, 
-            testAsset, 
-            testVault, 
-            testPid
-        );
-    }
-
-    function _prepareLP(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        _create_bToken();
-        _fundLP();
-        _register(
-            testPortal,
-            testAsset,
-            testVault,
-            testPid
-        );
-        _activateLP();
-    }
-
-    // create the bToken token
-    function _create_bToken() internal {
-        handlerVirtual._handler_create_bToken();
-    }
-
-    // fund the Virtual LP
-    function _fundLP() internal {
-        uint256 fundingAmount = 1e18;
-
-        vm.prank(psmSender);
-        psm.approve(address(handlerVirtual), 1e55);
-        vm.prank(psmSender);
-        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken)) ;
-    }
-
-    // activate the Virtual LP
-    function _activateLP() internal {
-        vm.warp(fundingPhase);
-        handlerVirtual._handler_activateLP();
-    }
-
-    // send USDC to LP when balance is required
-    function helper_sendUSDCtoLP() internal {
-        vm.prank(usdcSender);
-        usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
-    }
-
-    // simulate a full convert() cycle
-    function helper_executeConvert() internal {
-        helper_sendUSDCtoLP();
-        vm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
-        virtualLP.convert(
-            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-            msg.sender,
-            1,
-            block.timestamp
-        );
-    }
-
-    function _prepareYieldSourceUSDC(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid,
-        uint256 _amount
-    ) internal {
-        _prepareLP(
-            testPortal,
-            testAsset,
-            testVault,
-            testPid
-        );
-
-        vm.prank(usdcSender);
-        usdc.transfer(address(portal_USDC), _amount);
-
-        vm.prank(address(portal_USDC));
-        usdc.transfer(address(virtualLP), _amount);
-
-        vm.prank(address(portal_USDC));
-        usdc.approve(address(virtualLP), 1e55);
-        vm.prank(address(portal_USDC));
-        // handlerVirtual.increaseAllowanceVault(address(portal_USDC));
-    }
-
-    function prepare_contribution() internal {
-        _create_bToken();
-
-        uint256 fundingAmount = 1e8;
-        vm.prank(Alice);
-        MockToken(psm).approve(address(virtualLP), 1e55);
-
-        vm.startPrank(psmSender);
-        handlerVirtual._contributeFunding(fundingAmount, address(psm), address(hbToken));
-        vm.stopPrank();
-    }
-
-    function prepare_convert() internal {
-        vm.prank(Alice);
-        prepare_contribution();
-
-        // Precondition
-        _fundLP();
-        _activateLP();
-
-        // Action
-        helper_sendUSDCtoLP();
-        vm.prank(psmSender);
-        MockToken(psm).approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
-    }
-
-    // ============================================
-    // ==             TEST CASES                 ==
+    // ==             FV                         ==
     // ============================================
 
-    // function test_deposit_to_yield_source_usdc() public {
-    //     // Preconditions
-    //     uint256 _amount = 1000;
-    //     _prepareYieldSourceUSDC(
-    //         address(portal_USDC),
-    //         _PRINCIPAL_TOKEN_ADDRESS_USDC,
-    //         USDC_WATER,
-    //         _POOL_ID_USDC,
-    //         _amount
-    //     );
-
-    //     // Action
-    //     vm.prank(address(portal_USDC));
-    //     handlerVirtual._handler_depositToYieldSource(address(usdc), _amount);
-
-    //     // Check that stake was processed correctly in Vault and staking contract
-    //     // uint256 depositShares = IWater(USDC_WATER).convertToShares(_amount);
-    //     // uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
-    //     //     _POOL_ID_USDC,
-    //     //     address(virtualLP)
-    //     // );
-
-    //     // // Verification
-    //     // assertTrue(usdc.balanceOf(address(portal_USDC)) == 0);
-    //     // assertTrue(depositShares == stakedShares);
-    // }
-
-    function test_burn_b_tokens() public {
-        // Precondition
-        uint256 _amount = 1000;
-        
-        uint256 withdrawAmount = (_amount * FUNDING_MAX_RETURN_PERCENT) / 1000;
-
-        vm.prank(Alice);
-        prepare_contribution();
-
-        // Precondition
-        _fundLP();
-        _activateLP();
-
-        // Action
-        helper_sendUSDCtoLP();
-        vm.prank(Alice);
-        MockToken(psm).approve(address(virtualLP), 1e55);
-        
-        // vm.startPrank(Alice);
-        // handlerVirtual._handler_convert(
-        //     address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-        //     msg.sender,
-        //     1,
-        //     block.timestamp,
-        //     address(psm),
-        //     address(hbToken)
-        // );
-        // vm.stopPrank();
-
-        // vm.prank(Alice);
-        // // (hbToken) = MockToken(address(handlerVirtual.hbToken()));
-        // uint256 beforeBalance = hbToken.balanceOf(Alice);
-
-        // uint256 burnable = handlerVirtual._handler_getBurnableBtokenAmount();
-
-        // // Action
-        // vm.prank(Alice);
-        // hbToken.approve(address(virtualLP), 1e55);
-        // vm.prank(Alice);
-        // handlerVirtual._handler_burnBtokens(_amount,address(hbToken), address(psm));
-
-        // // Verification
-        // assertTrue(hbToken.balanceOf(Alice) == beforeBalance - withdrawAmount);
-    }
-
-    function test_contribute_funding() public {
-        _create_bToken();
-
-        uint256 fundingAmount = 1e8;
-        vm.startPrank(Alice);
-        psm.approve(address(handlerVirtual), 1e55);
-        handlerVirtual._contributeFunding(fundingAmount, address(psm), address(hbToken));
-
-        MockToken hbToken = MockToken(address(handlerVirtual.hbToken()));
-
-        console2.log("hbToken.balanceOf(Alice)", hbToken.balanceOf(Alice));
-        // assertTrue(
-        //     hbToken.balanceOf(Alice) ==
-        //         (fundingAmount * handlerVirtual.FUNDING_MAX_RETURN_PERCENT()) / 100
-        // );
-        // assert(psm.balanceOf(USER1) == psmAmount - fundingAmount);
-        // assert(psm.balanceOf(address(virtualLP)) == fundingAmount);
-        vm.stopPrank();
-    }
 
 
+/////////////////////////////////////////////////
 
+//                  VirtualLP                  //
 
-    // function test_val() public {
-    //     portal_USDC.create_portalNFT();
-    //     vm.prank(Alice);
-    //     portal_USDC.mintNFTposition(Karen);
-    // }
+/////////////////////////////////////////////////
 
-    // function test_contribute(address _dualS, uint256 _asset) public {
-    //     vm.startPrank(psmSender);
-    //     psm.approve(address(virtualLP), 1e55);
-    //     handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
-    //     vm.stopPrank();
+////////////// test_getBurnValuePSM //////////////
 
-    //     helper_registerPortalETH();
-    //     helper_registerPortalUSDC();
-
-    //     vm.warp(fundingPhase);
-    //     handlerVirtual._activateLP();    
-
-    //     // HandlerVirtual._increaseAllowanceDualStaking(address(esVKA), _dualS ); //@audit => no found
-    //     handlerVirtual.increaseAllowanceSingleStaking(address(portal_USDC), _asset);
-    // }
-
-
-
-        ////////////// FV //////////////
-        ////////////// FV //////////////
-        ////////////// FV //////////////
-
-
-////////////// test_getburn //////////////
-
-    function test_getburn(uint256 _amount) public {
+    function test_getBurnValuePSM(uint256 _amount) public {
         vm.assume(_amount > 0 && _amount <= 1e24);
 
         uint256 burnValue = handlerVirtual._handler_getBurnValuePSM(_amount);
@@ -548,6 +281,8 @@ contract ZealynxTest is Test {
         assertTrue(newBurnValue >= initialBurnValue);
     }
 
+////////////// test_BurnValue_BlockTimestamp_Changes_Over_Time //////////////
+
     function test_BurnValue_BlockTimestamp_Changes_Over_Time(uint256 _amount) public { //@audit
         vm.assume(_amount > 0 && _amount <= 1e24);
 
@@ -577,6 +312,13 @@ contract ZealynxTest is Test {
         assert(YearnewBurnValue == initialBurnValue + YearRate);
 
     }
+
+
+/////////////////////////////////////////////////
+
+//              PORTALVIRTUALV2                //
+
+/////////////////////////////////////////////////
 
 
 ////////////// test_BurnableBTokenAmountLogic //////////////
@@ -794,6 +536,8 @@ function test_HandlerBurnBtokens(uint256 _amountToBurn, uint256 _burnable) publi
 
     }
 
+    ////////////// test_4PortalEnergy_TimeAndLockChange_Negative //////////////
+
     function test_4PortalEnergy_TimeAndLockChange_Negative(
         uint256 _amount,
         uint256 _lastUpdateTime
@@ -801,11 +545,10 @@ function test_HandlerBurnBtokens(uint256 _amountToBurn, uint256 _burnable) publi
         vm.assume(_amount > 0 && _amount <= 1e24);
         vm.assume(_lastUpdateTime <= block.timestamp);
 
-        // Configurando las variables para el caso de prueba de ajuste negativo
         uint256 _portalEnergy = 500;
         uint256 _User_maxLockDuration = 7776000 - 5000;
         uint256 _stakeBalance = _amount + 500;
-        bool isPositive = false; // Ajuste para simulación de disminución
+        bool isPositive = false; 
         uint256 timePassed = block.timestamp - _lastUpdateTime;
         uint256 maxLockDifference = maxLockDuration - _User_maxLockDuration;
 
@@ -844,51 +587,7 @@ function test_HandlerBurnBtokens(uint256 _amountToBurn, uint256 _burnable) publi
 
         }   
 
-    function test_5PortalEnergy_TimeAndLockChange_Negative(
-        uint256 _amount,
-        uint256 _lastUpdateTime
-    ) public {
-        vm.assume(_amount > 0 && _amount <= 1e24);
-        vm.assume(_lastUpdateTime <= block.timestamp);
 
-        // Configuración inicial con isPositive = false para este caso
-        uint256 _portalEnergy = 500;
-        uint256 _User_maxLockDuration = 7776000 - 5000;
-        uint256 _stakeBalance = _amount + 500;
-        bool isPositive = false;
-        uint256 timePassed = block.timestamp - _lastUpdateTime;
-        uint256 maxLockDifference = maxLockDuration - _User_maxLockDuration;
-
-        // Cálculo de cambios en la energía del portal y ajustes
-        uint256 portalEnergyNetChange = calculatePortalEnergyNetChange(_stakeBalance, timePassed, maxLockDifference);
-        uint256 portalEnergyAdjustment = calculatePortalEnergyAdjustment(_amount);
-        uint256 portalEnergyTokensRequired = calculatePortalEnergyTokensRequired(isPositive, portalEnergyAdjustment, _portalEnergy, portalEnergyNetChange);
-        uint256 stakedBalanceUpdated = updateStakedBalance(_stakeBalance, _amount, isPositive);
-
-        // Aserciones específicas para el caso negativo
-        assert(portalEnergyNetChange >= 0);
-        assert(portalEnergyAdjustment >= 0);
-        assert(stakedBalanceUpdated <= _stakeBalance);
-        
-        if (portalEnergyAdjustment > _portalEnergy + portalEnergyNetChange) {
-            assert(portalEnergyTokensRequired > 0);
-        } else {
-            assert(portalEnergyTokensRequired == 0);
-        }
-
-        // Aserciones para el tiempo de actualización y duración de bloqueo máxima
-        assert(_lastUpdateTime == block.timestamp);
-        // assert(lastMaxLockDuration == maxLockDuration);
-
-        // // Aserciones para la energía del portal y la cantidad disponible para retirar
-        // uint256 expectedPortalEnergy = _portalEnergy + portalEnergyNetChange - portalEnergyAdjustment - portalEnergyTokensRequired;
-        // assert(expectedPortalEnergy >= 0);
-
-        // uint256 expectedAvailableToWithdraw = expectedPortalEnergy >= (stakedBalanceUpdated * maxLockDuration * 1e18 / _DENOMINATOR) 
-        //                                        ? stakedBalanceUpdated 
-        //                                        : (stakedBalanceUpdated * expectedPortalEnergy / (stakedBalanceUpdated * maxLockDuration * 1e18 / _DENOMINATOR));
-        // assert(expectedAvailableToWithdraw <= stakedBalanceUpdated);
-    }
 
 
 

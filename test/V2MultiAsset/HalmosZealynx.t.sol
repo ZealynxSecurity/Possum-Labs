@@ -87,12 +87,9 @@ contract Halmos_ZealynxTest is SymTest, Test {
     VirtualLP public virtualLP;
 
     // Simulated USDC distributor
-    // address usdcSender = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
     address public usdcSender;
 
-
     // PSM Treasury
-    // address psmSender = 0xAb845D09933f52af5642FC87Dd8FBbf553fd7B33;
     address public psmSender;
 
     // starting token amounts
@@ -101,6 +98,7 @@ contract Halmos_ZealynxTest is SymTest, Test {
     uint256 usdcSendAmount = 1e9; // 1k USDC
 
     uint256 public constant FUNDING_MAX_RETURN_PERCENT = 1000;
+    uint256 public _DENOMINATOR = 31536000000000;
 
     ////////////// SETUP ////////////////////////
     function setUp() public {
@@ -165,7 +163,6 @@ contract Halmos_ZealynxTest is SymTest, Test {
         // Deal tokens to addresses
         uint256 mintAmount = 1e65; 
 
-        // Mintear tokens PSM a psmSender
         vm.prank(psmSender);
         psm.mint(psmSender, mintAmount);
         
@@ -174,7 +171,6 @@ contract Halmos_ZealynxTest is SymTest, Test {
         psm.approve(address(handlerVirtual), mintAmount);
         vm.stopPrank();
 
-        // Mintear tokens USDC a usdcSender
         vm.prank(usdcSender);
         usdc.mint(usdcSender, mintAmount);
 
@@ -183,36 +179,27 @@ contract Halmos_ZealynxTest is SymTest, Test {
         uint256 transferAmountBob = 1e24; 
         uint256 transferAmountKaren = 1e23; 
 
-        // Transferir PSM a Alice
         vm.prank(psmSender);
         psm.transfer(Alice, transferAmountAlice);
-        // Transferir USDC a Alice
         vm.prank(usdcSender);
         usdc.transfer(Alice, transferAmountAlice);
 
-        // Transferir PSM a Bob
         vm.prank(psmSender);
         psm.transfer(Bob, transferAmountBob);
-        // Transferir USDC a Bob
         vm.prank(usdcSender);
         usdc.transfer(Bob, transferAmountBob);
 
-        // Transferir PSM a Karen
         vm.prank(psmSender);
         psm.transfer(Karen, transferAmountKaren);
-        // Transferir USDC a Karen
         vm.prank(usdcSender);
         usdc.transfer(Karen, transferAmountKaren);
 
-        // Además, si necesitas asegurar que Alice, Bob, y Karen tengan ETH para interactuar con la blockchain:
-        uint256 etherAmount = 1e65; // Cantidad de Ether para transferir, por ejemplo, 10 Ether
+        uint256 etherAmount = 1e65;
 
-        // Proporcionar Ether a Alice, Bob, y Karen
         vm.deal(Alice, etherAmount);
         vm.deal(Bob, etherAmount);
         vm.deal(Karen, etherAmount);
 
-        // Finalmente, asegúrate de que las direcciones de los contratos también tengan ETH si es necesario
         vm.deal(address(psm), etherAmount);
         vm.deal(address(usdc), etherAmount);
         vm.deal(address(virtualLP), etherAmount);
@@ -220,47 +207,22 @@ contract Halmos_ZealynxTest is SymTest, Test {
     } 
 
 
-    //////////// testSuccess_buyPortalEnergy ////////////
 
-    function check_testSuccess_buyPortalEnergy() public { 
-        console2.log("codesize");
-
-        vm.startPrank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
-        vm.stopPrank();
-
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            address(WETH_WATER),
-            _POOL_ID_WETH
-        );
-    }
-
-    function check_testSuccess_buyPortalEnergy2() public { 
-        console2.log("codesize");
-
-        vm.startPrank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        handlerVirtual._contributeFunding(_FUNDING_MIN_AMOUNT, address(psm), address(hbToken));
-        vm.stopPrank();
-
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            address(portal_USDC),
-            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-            address(USDC_WATER),
-            _POOL_ID_USDC
-        );
-    }
+        // ============================================
+        // ==               FV                       ==
+        // ============================================
 
 
-////////////// FV //////////////
+    
+/////////////////////////////////////////////////
 
-////////////// test_getburn //////////////
-    function check_test_getburn(uint256 _amount) public {
+//                  VirtualLP                  //
+
+/////////////////////////////////////////////////
+
+
+////////////// check_getBurnValuePSM //////////////
+    function check_getBurnValuePSM(uint256 _amount) public {
 
         vm.assume(_amount > 0 && _amount <= 1e24);
         // uint32 _amount = uint32(svm.createUint(amount, "amount"));
@@ -326,30 +288,60 @@ contract Halmos_ZealynxTest is SymTest, Test {
         assertTrue(newBurnValue >= initialBurnValue);
     }
 
+////////////// check_BurnValue_BlockTimestamp_Changes_Over_Time //////////////
+
+    function check_BurnValue_BlockTimestamp_Changes_Over_Time(uint256 _amount) public { //@audit
+        vm.assume(_amount > 0 && _amount <= 1e24);
+
+        uint256 initialBurnValue = handlerVirtual._handler_getBurnValuePSM(_amount);
+        console2.log("initialBurnValue",initialBurnValue);
+
+        uint256 timeToWarp = 31536000;
+        vm.warp(block.timestamp + 365 days);
+
+        uint256 YearnewBurnValue = handlerVirtual._handler_getBurnValuePSM(_amount);
+        console2.log("YearnewBurnValue",YearnewBurnValue);
+  
+        uint256 YearRate = YearnewBurnValue - initialBurnValue;
+        console2.log("YearRate",YearRate);
+
+        // 1 week
+        uint256 weekRate = ((7 days * YearRate) / 365 days);
+        console2.log("weekRate",weekRate);
+
+        vm.warp(block.timestamp + 7 days);
+
+        uint256 WeakBurnValue = handlerVirtual._handler_getBurnValuePSM(_amount);
+        console2.log("WeakBurnValue",WeakBurnValue);
+
+    
+        assert(WeakBurnValue == (YearnewBurnValue + weekRate ));
+        assert(YearnewBurnValue == initialBurnValue + YearRate);
+
+    }
+
 
 /////////////////////////////////////////////////
 
-    ///////// PORTALVIRTUALV2 //////////////
+//              PORTALVIRTUALV2                //
 
 /////////////////////////////////////////////////
 
 
-////////////// test_BurnableBTokenAmountLogic //////////////
+////////////// check_BurnableBTokenAmountLogic //////////////
 
 function check_BurnableBTokenAmountLogic(uint256 fundingRewardPool) public {
         vm.assume(fundingRewardPool > 0 && fundingRewardPool <= 1e24);
 
         uint256 burnValueFor1e18 = handlerVirtual._handler_getBurnValuePSM(1e18) + 1;
-
         uint256 expectedAmountBurnable = (fundingRewardPool * 1e18) / burnValueFor1e18;
-
         uint256 actualAmountBurnable = handlerVirtual._handler_Modify_getBurnableBtokenAmount(fundingRewardPool);
 
         assert (actualAmountBurnable == expectedAmountBurnable);
 }
 
 
-////////////// test_BurnableBTokenAmount_Changes_Over_Time //////////////
+////////////// check_BurnableBTokenAmount_Changes_Over_Time //////////////
 function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool) public {
     vm.assume(fundingRewardPool > 0 && fundingRewardPool <= 1e24);
 
@@ -378,18 +370,15 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
     }
 
 
-////////////// _checkNoBackdoor //////////////
-    function _checkNoBackdoor(bytes4 selector, bytes memory args) public virtual {
-        // consider two arbitrary distinct accounts
+////////////// check_Incariant_Stake //////////////
+    function check_Incariant_Stake(bytes4 selector, bytes memory args) public virtual {
         uint256 stakeAmount = 1000e18;
         bytes memory args = svm.createBytes(1024, 'data');
 
-        // record their current balances
         uint256 oldBalanceOther = portal_ETH.totalPrincipalStaked();
         vm.prank(Alice);
         portal_ETH.stake(stakeAmount);
 
-        // consider an arbitrary function call to the token from the caller
         vm.prank(Alice);
         (bool success,) = address(portal_ETH).call(abi.encodePacked(selector, args));
         
@@ -403,10 +392,9 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
        
     }
 
-    uint256 public _DENOMINATOR = 31536000000000;
 
-////////////// test_2change //////////////
-    function test_PortalEnergy_TimeAndLockChange(uint256 _amount, uint256 _lastUpdateTime ) public {
+////////////// check_PortalEnergy_TimeAndLockChange //////////////
+    function check_PortalEnergy_TimeAndLockChange(uint256 _amount, uint256 _lastUpdateTime ) public {
     
         vm.assume(_amount > 0 && _amount <= 1e24);
         vm.assume(_lastUpdateTime <= block.timestamp);
@@ -434,10 +422,9 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
             }
 
 
-        // Aserciones
         assertTrue(portalEnergyNetChange >= 0, "Portal energy net change should be non-negative");
 
-        uint256 newTimePassed = timePassed + 1 days; // Simula un día más
+        uint256 newTimePassed = timePassed + 1 days;
         uint256 newPortalEnergyNetChange = ((stakedBalance * newTimePassed + stakedBalance * maxLockDifference) * 1e18) / _DENOMINATOR;
         assertTrue(newPortalEnergyNetChange > portalEnergyNetChange, "Portal energy should increase with time");
 
@@ -448,9 +435,9 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
 
 
 
-////////////// test_2PortalEnergy_TimeAndLockChange //////////////
+////////////// check_PortalEnergyImpactOnTimeAndLock //////////////
 
-    function check_2PortalEnergy_TimeAndLockChange(
+    function check_PortalEnergyImpactOnTimeAndLock(
         uint256 _amount,
         uint256 _lastUpdateTime
     ) public {
@@ -501,9 +488,9 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
     }
 
 
-    ////////////// check_3PortalEnergy_TimeAndLockChange //////////////
+    ////////////// check_DetailedPortalEnergyTimeLockAdjustments //////////////
 
-    function check_3PortalEnergy_TimeAndLockChange(uint256 _amount, uint256 _lastUpdateTime) public {
+    function check_DetailedPortalEnergyTimeLockAdjustments(uint256 _amount, uint256 _lastUpdateTime) public {
         vm.assume(_amount > 0 && _amount <= 1e24);
         vm.assume(_lastUpdateTime <= block.timestamp);
 
@@ -539,9 +526,61 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
 
 
 
+    ////////////// check_PortalEnergyAdjustmentNegativeImpact //////////////
+    function check_PortalEnergyAdjustmentNegativeImpact(
+        uint256 _amount,
+        uint256 _lastUpdateTime
+    ) public {
+        vm.assume(_amount > 0 && _amount <= 1e24);
+        vm.assume(_lastUpdateTime <= block.timestamp);
+
+        uint256 _portalEnergy = 500;
+        uint256 _User_maxLockDuration = 7776000 - 5000;
+        uint256 _stakeBalance = _amount + 500;
+        bool isPositive = false; 
+        uint256 timePassed = block.timestamp - _lastUpdateTime;
+        uint256 maxLockDifference = maxLockDuration - _User_maxLockDuration;
+
+        uint256 portalEnergyNetChange = calculatePortalEnergyNetChange(
+                _stakeBalance,
+                timePassed,
+                maxLockDifference
+            );
+
+            uint256 portalEnergyAdjustment = calculatePortalEnergyAdjustment(_amount);
+
+            uint256 portalEnergyTokensRequired = calculatePortalEnergyTokensRequired(
+                isPositive,
+                portalEnergyAdjustment,
+                _portalEnergy,
+                portalEnergyNetChange
+            );
+
+            uint256 stakedBalanceUpdated = updateStakedBalance(
+                _stakeBalance,
+                _amount,
+                isPositive
+            );
+
+            assert(portalEnergyNetChange >= 0);
+
+            assert(portalEnergyAdjustment > 0);
+
+            if (portalEnergyAdjustment > (_portalEnergy + portalEnergyNetChange)) {
+                assert(portalEnergyTokensRequired > 0);
+            } else {
+                assert(portalEnergyTokensRequired == 0);
+            }
+
+            assert(stakedBalanceUpdated < _stakeBalance);
+
+        }   
 
 
 
+    // ============================================
+    // ==             HELPER ACTIONS             ==
+    // ============================================
 
     function calculatePortalEnergyNetChange(
         uint256 stakedBalance,
@@ -579,124 +618,9 @@ function check_BurnableBTokenAmount_Changes_Over_Time(uint256 fundingRewardPool)
             return 0;
         }
     }
-////////////// HELPER FUNCTIONS /////////////
-
-////////////// HELPER FUNCTIONS /////////////
 
 
 
-    // function helper_Stake(address account, uint256 fuzzAmount) public {
-
-    //  // STAKE //
-    //     uint256 InitialUSDCBalance = usdc.balanceOf(account);
-
-    //     // Aprobación y Stake
-    //     vm.startPrank(account);
-    //     usdc.approve(address(portal_USDC), fuzzAmount);
-    //     portal_USDC.stake(fuzzAmount);
-    //     vm.stopPrank();
-
-    //     uint256 FinalUSDCBalance = usdc.balanceOf(account);
-
-    //     // Verificaciones
-    //     assertEq(InitialUSDCBalance - fuzzAmount, FinalUSDCBalance, "El balance de Alice despues del stake es incorrecto.");
-    //     assertEq(portal_USDC.totalPrincipalStaked(), fuzzAmount, "El total principal staked no coincide con el monto de stake.");
-
-    // }
-    // create the bToken token
-    function helper_create_bToken() public {
-        virtualLP.create_bToken();
-    }
-
-    // fund the Virtual LP
-    function helper_fundLP() public {
-        vm.startPrank(psmSender);
-
-        psm.approve(address(virtualLP), 1e55);
-        virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
-
-        vm.stopPrank();
-    }
-
-    // Register USDC Portal
-    function helper_registerPortalUSDC() public {
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            address(portal_USDC),
-            address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-            address(USDC_WATER),
-            _POOL_ID_USDC
-        );
-    }
-
-    // Register ETH Portal
-    function helper_registerPortalETH() public {
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            address(WETH_WATER),
-            _POOL_ID_WETH
-        );
-    }
-
-    // activate the Virtual LP
-    function helper_activateLP() public {
-        vm.warp(fundingPhase);
-        virtualLP.activateLP();
-    }
-
-    // fund and activate the LP and register both Portals
-    function helper_prepareSystem() public {
-        helper_create_bToken();
-        helper_fundLP();
-        helper_registerPortalETH();
-        helper_registerPortalUSDC();
-        helper_activateLP();
-    }
-
-    // // Deploy the NFT contract
-    // function helper_createNFT() public {
-    //     portal_USDC.create_portalNFT();
-    // }
-
-    // // Deploy the ERC20 contract for mintable Portal Energy
-    // function helper_createPortalEnergyToken() public {
-    //     portal_USDC.create_portalEnergyToken();
-    // }
-
-    // // Increase allowance of tokens used by the USDC Portal
-    // function helper_setApprovalsInLP_USDC() public {
-    //     virtualLP.increaseAllowanceDualStaking();
-    //     virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
-    //     virtualLP.increaseAllowanceVault(address(portal_USDC));
-    // }
-
-    // // Increase allowance of tokens used by the ETH Portal
-    // function helper_setApprovalsInLP_ETH() public {
-    //     virtualLP.increaseAllowanceDualStaking();
-    //     virtualLP.increaseAllowanceSingleStaking(address(portal_ETH));
-    //     virtualLP.increaseAllowanceVault(address(portal_ETH));
-    // }
-
-    // // send USDC to LP when balance is required
-    // function helper_sendUSDCtoLP() public {
-    //     vm.prank(usdcSender);
-    //     usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
-    // }
-
-    // // simulate a full convert() cycle
-    // function helper_executeConvert() public {
-    //     helper_sendUSDCtoLP();
-    //     vm.startPrank(psmSender);
-    //     psm.approve(address(virtualLP), 1e55);
-    //     virtualLP.convert(
-    //         address(_PRINCIPAL_TOKEN_ADDRESS_USDC),
-    //         msg.sender,
-    //         1,
-    //         block.timestamp
-    //     );
-    //     vm.stopPrank();
-    // }
+   
 }
 

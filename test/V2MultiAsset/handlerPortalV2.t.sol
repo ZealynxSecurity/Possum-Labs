@@ -75,8 +75,6 @@ contract HandlerPortalV2 is PortalV2MultiAsset {
     }
 
 
-
-
 }
 
 

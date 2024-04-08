@@ -46,10 +46,10 @@ contract FoundryLogic is FoundrySetup {
 
     // fund the Virtual LP
     function _fundLP() internal {
-        vm.prank(psmSender);
+        vm.startPrank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
         virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
+        vm.stopPrank();
     }
 
     // activate the Virtual LP
@@ -111,7 +111,7 @@ contract FoundryLogic is FoundrySetup {
         address testAsset,
         address testVault,
         uint256 testPid
-    ) internal {
+    ) internal view {
         assertTrue(virtualLP.registeredPortals(testPortal) == true);
         assertTrue(virtualLP.vaults(testPortal, testAsset) == testVault);
         assertTrue(virtualLP.poolID(testPortal, testAsset) == testPid); 

@@ -292,7 +292,6 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
 
         assert(lastMaxLockDurationAfter == lastMaxLockDurationBefore);
         assert(stakeBalanceAfter == _amountAccount);
-        // assert(peBalanceAfter == _amountAccount);
     }
 
     function testMintNFTPositionNFTPortal(uint256 _amountStake, uint256 _amountAccount) public {
@@ -334,6 +333,10 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         assert(nftStakedBalance == stakeBalanceBefore);
         assert(nftPortalEnergy == peBalanceBefore);
     }
+
+    // ============================================
+    // ==          REDEEM NFT POSITION           ==
+    // ============================================
 
     function testRedeemNFTposition(uint256 _amountStake, uint256 timePassed) public {
         uint256 user1InitialUSDCBalance = usdc.balanceOf(USER1);
@@ -392,10 +395,6 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         
         uint256 expectedPEBalanceMarginUp = expectedPEBalance + 1;
         uint256 expectedPEBalanceMarginDown = expectedPEBalance - 1;
-
-        Debugger.log("peBalanceAfter: ", peBalanceAfter);
-        Debugger.log("expectedPEBalance: ", expectedPEBalance);
-
 
         assert(stakeBalanceAfter == amountStake);
         assert(

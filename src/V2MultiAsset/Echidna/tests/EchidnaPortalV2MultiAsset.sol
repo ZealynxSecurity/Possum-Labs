@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.19;
 
-import "./EchidnaLogic.sol";
+import "../EchidnaLogic.sol";
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 
@@ -335,11 +335,13 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         assert(nftPortalEnergy == peBalanceBefore);
     }
 
-    function testRedeemNFTposition(uint256 _amountStake) public {
+    function testRedeemNFTposition(uint256 _amountStake, uint256 timePassed) public {
         uint256 user1InitialUSDCBalance = usdc.balanceOf(USER1);
         uint256 minOperationalAmount = 1e4; 
         require(_amountStake >= minOperationalAmount);
         require(_amountStake <= user1InitialUSDCBalance);
+        require(timePassed > 1 days);
+        require(timePassed <= 10000 days);
 
         uint256 amountStake = _amountStake;
 
@@ -348,14 +350,14 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
         (
             ,
             ,
-            ,
+            uint256 stakeBalanceBefore,
             ,
             uint256 peBalanceBefore,
             ,
 
         ) = portal_USDC.getUpdateAccount(USER3, 0, true);
 
-        hevm.warp(block.timestamp + 100 days);
+        hevm.warp(block.timestamp + timePassed);
         hevm.prank(USER3);
         try portal_USDC.redeemNFTposition(1) {
             // continue
@@ -375,10 +377,9 @@ contract EchidnaPortalV2MultiAsset is EchidnaLogic {
 
         ) = portal_USDC.getUpdateAccount(USER3, 0, true);
 
-        uint256 timePassed = 100 days;
-        uint256 portalEnergyEarned = stakeBalanceAfter * timePassed;
+        uint256 portalEnergyEarned = stakeBalanceBefore * timePassed;
         uint256 maxLockDifference = maxLockDuration - lastMaxLockDurationAfter;
-        uint256 portalEnergyIncrease = amountStake * maxLockDifference;
+        uint256 portalEnergyIncrease = stakeBalanceBefore * maxLockDifference;
         uint256 portalEnergyNetChange =
                 ((portalEnergyEarned + portalEnergyIncrease) * 1e18) /
                 DENOMINATOR;

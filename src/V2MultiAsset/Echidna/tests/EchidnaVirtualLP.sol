@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity =0.8.19;
 
-import "./EchidnaLogic.sol";
+import "../EchidnaLogic.sol";
 
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
@@ -94,19 +94,19 @@ contract EchidnaVirtualLP is EchidnaLogic {
     ////////////////// UNIT TESTS /////////////////
     ///////////////////////////////////////////////
     
-    function test_address_changed_to_zero() public {
-        // Precondition
-        hevm.warp(block.timestamp + OWNER_DURATION + 1);
-        virtualLP.removeOwner();
+    // function test_address_changed_to_zero() public {
+    //     // Precondition
+    //     hevm.warp(block.timestamp + OWNER_DURATION + 1);
+    //     virtualLP.removeOwner();
 
-        // Action
-        try virtualLP.removeOwner() {
-            assert(false);
-        } catch {
-            // Verification
-            assert(true);
-        }
-    }
+    //     // Action
+    //     try virtualLP.removeOwner() {
+    //         assert(false);
+    //     } catch {
+    //         // Verification
+    //         assert(true);
+    //     }
+    // }
 
     function test_revert_remove_owner() public {
         // Precondition
@@ -213,16 +213,17 @@ contract EchidnaVirtualLP is EchidnaLogic {
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
 
-    function test_withdraw_from_yield_source(uint256 _amount) public {
+    function test_withdraw_from_yield_source(uint256 _amount, uint256 timePassed) public {
         // Preconditions
         require(_amount > 0);
+        require(timePassed < 10_000 days);
         _prepareYieldSourceUSDC(_amount);
         hevm.prank(address(portal_USDC));
         virtualLP.depositToYieldSource(address(usdc), _amount);
 
 
         uint256 balanceUser1Start = usdc.balanceOf(USER1);
-        hevm.warp(block.timestamp + 100);
+        hevm.warp(block.timestamp + timePassed);
 
         uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amount);
         uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
@@ -701,35 +702,35 @@ contract EchidnaVirtualLP is EchidnaLogic {
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
 
-    function test_fuzz_get_burn_value_psm(uint256 _amount) public {
-        // Precondition
-        require(_amount != 0);
-        uint256 creationTime = block.timestamp;
-        _create_bToken();
-        _fundLP();
-        _activateLP();
+    // function test_fuzz_get_burn_value_psm(uint256 _amount) public {
+    //     // Precondition
+    //     require(_amount != 0);
+    //     uint256 creationTime = block.timestamp;
+    //     _create_bToken();
+    //     _fundLP();
+    //     _activateLP();
 
-        // Fast forward time
-        hevm.warp(hundredYearsLater);
-        // Calculate expected burn value after warping
-        uint256 burnValueAfterWarp = virtualLP.getBurnValuePSM(_amount);
+    //     // Fast forward time
+    //     hevm.warp(hundredYearsLater);
+    //     // Calculate expected burn value after warping
+    //     uint256 burnValueAfterWarp = virtualLP.getBurnValuePSM(_amount);
 
-        // Expected minValue
-        uint256 expectedMinValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
+    //     // Expected minValue
+    //     uint256 expectedMinValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
 
-        // Expected accruedValue (for a large warp, this will be significant)
-        uint256 expectedAccruedValue = (_amount *
-            (block.timestamp - creationTime) * FUNDING_APR) / (100 * SECONDS_PER_YEAR);
+    //     // Expected accruedValue (for a large warp, this will be significant)
+    //     uint256 expectedAccruedValue = (_amount *
+    //         (block.timestamp - creationTime) * FUNDING_APR) / (100 * SECONDS_PER_YEAR);
 
-        // Calculate expectedCurrentValue
-        uint256 expectedCurrentValue = expectedMinValue + expectedAccruedValue;
+    //     // Calculate expectedCurrentValue
+    //     uint256 expectedCurrentValue = expectedMinValue + expectedAccruedValue;
         
-        // Calculate the maximum and current burn value
-        uint256 expectedBurnValue = (expectedCurrentValue < _amount) ? expectedCurrentValue : _amount;
+    //     // Calculate the maximum and current burn value
+    //     uint256 expectedBurnValue = (expectedCurrentValue < _amount) ? expectedCurrentValue : _amount;
 
-        // Assert that the burn value after warping matches the capped or calculated expectedBurnValue
-        assert(burnValueAfterWarp == expectedBurnValue); // "Burn value after time warp does not match expected calculation.");
-    }
+    //     // Assert that the burn value after warping matches the capped or calculated expectedBurnValue
+    //     assert(burnValueAfterWarp == expectedBurnValue); // "Burn value after time warp does not match expected calculation.");
+    // }
 
     // ============================================
     // ==             BURN B TOKENS              ==

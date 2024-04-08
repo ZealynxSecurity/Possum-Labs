@@ -5,15 +5,15 @@ import {Test, console2} from "forge-std/Test.sol";
 import {PortalV2MultiAsset} from "src/V2MultiAsset/PortalV2MultiAsset.sol";
 import {MintBurnToken} from "src/V2MultiAsset/MintBurnToken.sol";
 import {VirtualLP} from "src/V2MultiAsset/VirtualLP.sol";
-import {ErrorsLib} from "./libraries/ErrorsLib.sol";
-import {EventsLib} from "./libraries/EventsLib.sol";
+import {ErrorsLib} from "../libraries/ErrorsLib.sol";
+import {EventsLib} from "../libraries/EventsLib.sol";
 import {IERC20} from "@openzeppelin/contracts/token/ERC20/IERC20.sol";
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 import {IDualStaking} from "src/V2MultiAsset/interfaces/IDualStaking.sol";
 import {IPortalV2MultiAsset} from "src/V2MultiAsset/interfaces/IPortalV2MultiAsset.sol";
 
-contract ZealynxTest is Test {
+contract ZealynxPortalV2MultiAssetTest is FoundrySetup {
 // External token addresses
     address constant WETH_ADDRESS = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
     address public constant PSM_ADDRESS = 0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5;

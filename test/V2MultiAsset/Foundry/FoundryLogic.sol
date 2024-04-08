@@ -46,10 +46,10 @@ contract FoundryLogic is FoundrySetup {
 
     // fund the Virtual LP
     function _fundLP() internal {
-        vm.prank(psmSender);
+        vm.startPrank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
         virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
+        vm.stopPrank();
     }
 
     // activate the Virtual LP

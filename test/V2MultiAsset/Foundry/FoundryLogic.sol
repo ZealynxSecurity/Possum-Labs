@@ -43,10 +43,6 @@ contract FoundryLogic is FoundrySetup {
     function _create_bToken() internal {
         virtualLP.create_bToken();
     }
-    // create the bToken token
-    function helper_create_bToken() public {
-        virtualLP.create_bToken();
-    }
 
     // fund the Virtual LP
     function _fundLP() internal {
@@ -58,11 +54,6 @@ contract FoundryLogic is FoundrySetup {
 
     // activate the Virtual LP
     function _activateLP() internal {
-        vm.warp(fundingPhase);
-        virtualLP.activateLP();
-    }
-     // activate the Virtual LP
-    function helper_activateLP() public {
         vm.warp(fundingPhase);
         virtualLP.activateLP();
     }

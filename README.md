@@ -5,10 +5,10 @@
 | [Init](#init) | Initial setup and build commands. |
 | [Where to Find the Tests](#where-to-find-the-tests) | Locations of different test suites. |
 | [Testing Environments](#testing-environments) | Overview of testing environments: Foundry, Echidna, Halmos, and Ityfuzz. |
-| [Foundry Tests](#foundry-tests) | How to run Foundry tests and where to find them. |
-| [Echidna Tests](#echidna-tests) | Setup and execution of Echidna tests. |
-| [Halmos Tests](#halmos-tests) | Information on setting up and running Halmos tests. |
-| [Ityfuzz Tests](#ityfuzz-tests) | Details on Ityfuzz testing environment and usage. |
+| [Foundry Tests](#foundry) | How to run Foundry tests and where to find them. |
+| [Echidna Tests](#echidna) | Setup and execution of Echidna tests. |
+| [Halmos Tests](#halmos) | Information on setting up and running Halmos tests. |
+| [Ityfuzz Tests](#ityfuzz) | Details on Ityfuzz testing environment and usage. |
 | [Test Coverage](#test-coverage) | Test coverage information for various contracts and functionalities. |
 
 ## Installation

@@ -1,11 +1,9 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.19;
+pragma solidity ^0.8.0;
 
-import "./EchidnaSetup.sol";
+import {FoundrySetup} from "./FoundrySetup.sol";
 
-contract EchidnaLogic is EchidnaSetup {
-
-    constructor() payable {}
+contract FoundryLogic is FoundrySetup {
 
     function _register(
         address testPortal,
@@ -14,18 +12,13 @@ contract EchidnaLogic is EchidnaSetup {
         uint256 testPid
     ) internal {
         // Precondition
-        hevm.prank(psmSender);
-        try virtualLP.registerPortal(
+        vm.prank(psmSender);
+        virtualLP.registerPortal(
             testPortal, 
             testAsset, 
             testVault, 
             testPid
-        ) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
+        );
     }
 
     function _prepareLP() internal {
@@ -50,44 +43,48 @@ contract EchidnaLogic is EchidnaSetup {
     function _create_bToken() internal {
         virtualLP.create_bToken();
     }
+    // create the bToken token
+    function helper_create_bToken() public {
+        virtualLP.create_bToken();
+    }
 
     // fund the Virtual LP
     function _fundLP() internal {
-        hevm.prank(psmSender);
+        vm.prank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
-        try virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
+        vm.prank(psmSender);
+        virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
     }
 
     // activate the Virtual LP
     function _activateLP() internal {
-        hevm.warp(fundingPhase);
+        vm.warp(fundingPhase);
+        virtualLP.activateLP();
+    }
+     // activate the Virtual LP
+    function helper_activateLP() public {
+        vm.warp(fundingPhase);
         virtualLP.activateLP();
     }
 
     // send USDC to LP when balance is required
-    function helper_sendUSDCtoLP() internal {
-        hevm.prank(usdcSender);
+    function _sendUSDCtoLP() internal {
+        vm.prank(usdcSender);
         usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
     }
 
     function _prepareYieldSourceUSDC(uint256 _amount) internal {
         _prepareLP();
 
-        hevm.prank(usdcSender);
+        vm.prank(usdcSender);
         usdc.transfer(address(portal_USDC), _amount);
 
-        hevm.prank(address(portal_USDC));
+        vm.prank(address(portal_USDC));
         usdc.transfer(address(virtualLP), _amount);
 
-        hevm.prank(address(portal_USDC));
+        vm.prank(address(portal_USDC));
         usdc.approve(address(virtualLP), 1e55);
-        hevm.prank(address(portal_USDC));
+        vm.prank(address(portal_USDC));
         virtualLP.increaseAllowanceVault(address(portal_USDC));
         virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
         virtualLP.increaseAllowanceDualStaking();
@@ -97,19 +94,14 @@ contract EchidnaLogic is EchidnaSetup {
         uint256 _fundingAmount = 1e18;
         _create_bToken();
 
-        hevm.prank(USER1);
+        vm.prank(Alice);
         psm.approve(address(virtualLP), 1e55);
-        hevm.prank(USER1);
-        try virtualLP.contributeFunding(_fundingAmount) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
+        vm.prank(Alice);
+        virtualLP.contributeFunding(_fundingAmount);
     }
 
     function prepare_convert() internal {
-        hevm.prank(USER1);
+        vm.prank(Alice);
         prepare_contribution();
 
         // Precondition
@@ -117,10 +109,10 @@ contract EchidnaLogic is EchidnaSetup {
         _activateLP();
 
         // Action
-        helper_sendUSDCtoLP();
-        hevm.prank(psmSender);
+        _sendUSDCtoLP();
+        vm.prank(psmSender);
         psm.approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
+        vm.prank(psmSender);
     }
 
     function _assertPortalRegistered(
@@ -129,8 +121,8 @@ contract EchidnaLogic is EchidnaSetup {
         address testVault,
         uint256 testPid
     ) internal {
-        assert(virtualLP.registeredPortals(testPortal) == true);
-        assert(virtualLP.vaults(testPortal, testAsset) == testVault);
-        assert(virtualLP.poolID(testPortal, testAsset) == testPid); 
+        assertTrue(virtualLP.registeredPortals(testPortal) == true);
+        assertTrue(virtualLP.vaults(testPortal, testAsset) == testVault);
+        assertTrue(virtualLP.poolID(testPortal, testAsset) == testPid); 
     }
 }

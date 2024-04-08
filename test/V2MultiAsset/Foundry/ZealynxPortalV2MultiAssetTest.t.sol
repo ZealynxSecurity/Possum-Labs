@@ -12,220 +12,46 @@ import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 import {IDualStaking} from "src/V2MultiAsset/interfaces/IDualStaking.sol";
 import {IPortalV2MultiAsset} from "src/V2MultiAsset/interfaces/IPortalV2MultiAsset.sol";
+import {FoundryLogic} from "./FoundryLogic.sol";
 
-contract ZealynxPortalV2MultiAssetTest is FoundrySetup {
-// External token addresses
-    address constant WETH_ADDRESS = 0x82aF49447D8a07e3bd95BD0d56f35241523fBab1;
-    address public constant PSM_ADDRESS = 0x17A8541B82BF67e10B0874284b4Ae66858cb1fd5;
-    address constant esVKA = 0x95b3F9797077DDCa971aB8524b439553a220EB2A;
+contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
 
-    // Vaultka staking contracts
-    address constant SINGLE_STAKING = 0x314223E2fA375F972E159002Eb72A96301E99e22;
-    address constant DUAL_STAKING = 0x31Fa38A6381e9d1f4770C73AB14a0ced1528A65E;
+    // ============================================
+    // ==                  STAKE                 ==
+    // ============================================
 
-    uint256 constant _POOL_ID_USDC = 5;
-    uint256 constant _POOL_ID_WETH = 10;
+    function testFuzzingStakeUSDC(uint256 _amountStake) public {
+        // Setup the system
+        helper_create_bToken();
+        helper_fundLP();
+        helper_registerPortalETH();
+        helper_registerPortalUSDC();
+        helper_activateLP();
 
-    address private constant USDC_WATER = 0x9045ae36f963b7184861BDce205ea8B08913B48c;
-    address private constant WETH_WATER = 0x8A98929750e6709Af765F976c6bddb5BfFE6C06c;
+        // Set up approvals on LP for USDC
+        virtualLP.increaseAllowanceDualStaking();
+        virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
+        virtualLP.increaseAllowanceVault(address(portal_USDC));
 
-    address private constant _PRINCIPAL_TOKEN_ADDRESS_USDC = 0xaf88d065e77c8cC2239327C5EDb3A432268e5831;
-    address private constant _PRINCIPAL_TOKEN_ADDRESS_ETH = address(0);
+        deal(address(usdc), Alice, 1e10);
+        uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
 
-    // General constants
-    uint256 constant _TERMINAL_MAX_LOCK_DURATION = 157680000;
-    uint256 private constant SECONDS_PER_YEAR = 31536000; // seconds in a 365 day year
-    uint256 public maxLockDuration = 7776000; // 7776000 starting value for maximum allowed lock duration of user´s balance in seconds (90 days)
-    uint256 private constant OWNER_DURATION = 31536000; // 1 Year
+        vm.assume(_amountStake > 0 && _amountStake <= aliceInitialUSDCBalance);
 
-    // Portal Constructor values
-    uint256 constant _TARGET_CONSTANT_USDC = 440528634361 * 1e36;
-    uint256 constant _TARGET_CONSTANT_WETH = 125714213 * 1e36;
+        // Approval and Stake
+        vm.startPrank(Alice);
+        usdc.approve(address(portal_USDC), _amountStake);
+        portal_USDC.stake(_amountStake);
+        vm.stopPrank();
 
-    uint256 constant _FUNDING_PHASE_DURATION = 604800; // 7 days
-    uint256 constant _FUNDING_MIN_AMOUNT = 1e25; // 10M PSM
+        uint256 aliceFinalUSDCBalance = usdc.balanceOf(Alice);
 
-    uint256 constant _DECIMALS = 18;
-    uint256 constant _DECIMALS_USDC = 6;
-
-    uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
-
-    string _META_DATA_URI = "abcd";
-
-    // time
-    uint256 timestamp;
-    uint256 fundingPhase;
-    uint256 ownerExpiry;
-    uint256 hundredYearsLater;
-
-    // prank addresses
-    address payable Alice = payable(0x46340b20830761efd32832A74d7169B29FEB9758);
-    address payable Bob = payable(0xDD56CFdDB0002f4d7f8CC0563FD489971899cb79);
-    address payable Karen = payable(0x3A30aaf1189E830b02416fb8C513373C659ed748);
-
-    // Token Instances
-    IERC20 psm = IERC20(PSM_ADDRESS);
-    IERC20 usdc = IERC20(_PRINCIPAL_TOKEN_ADDRESS_USDC);
-    IERC20 weth = IERC20(WETH_ADDRESS);
-
-    // Portals & LP
-    PortalV2MultiAsset public portal_USDC;
-    PortalV2MultiAsset public portal_ETH;
-    VirtualLP public virtualLP;
-
-    // Simulated USDC distributor
-    address usdcSender = 0xF977814e90dA44bFA03b6295A0616a897441aceC;
-
-    // PSM Treasury
-    address psmSender = 0xAb845D09933f52af5642FC87Dd8FBbf553fd7B33;
-
-    // starting token amounts
-    uint256 usdcAmount = 1e12; // 1M USDC
-    uint256 psmAmount = 1e25; // 10M PSM
-    uint256 usdcSendAmount = 1e9; // 1k USDC
-
-    ////////////// SETUP ////////////////////////
-    function setUp() public {
-        // Create Virtual LP instance
-        virtualLP = new VirtualLP(
-            psmSender,
-            _AMOUNT_TO_CONVERT,
-            _FUNDING_PHASE_DURATION,
-            _FUNDING_MIN_AMOUNT
-        );
-        address _VIRTUAL_LP = address(virtualLP);
-
-        // Create Portal instances
-        portal_USDC = new PortalV2MultiAsset(
-            _VIRTUAL_LP,
-            _TARGET_CONSTANT_USDC,
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            _DECIMALS_USDC,
-            "USD Coin",
-            "USDC",
-            _META_DATA_URI
-        );
-        portal_ETH = new PortalV2MultiAsset(
-            _VIRTUAL_LP,
-            _TARGET_CONSTANT_WETH,
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            _DECIMALS,
-            "ETHER",
-            "ETH",
-            _META_DATA_URI
-        );
-
-        // creation time
-        timestamp = block.timestamp;
-        fundingPhase = timestamp + _FUNDING_PHASE_DURATION;
-        ownerExpiry = timestamp + OWNER_DURATION;
-        hundredYearsLater = timestamp + 100 * SECONDS_PER_YEAR;
-
-        // Deal tokens to addresses
-        vm.deal(Alice, 1 ether);
-        vm.prank(psmSender);
-        psm.transfer(Alice, psmAmount);
-        vm.prank(usdcSender);
-        usdc.transfer(Alice, usdcAmount);
-
-        vm.deal(Bob, 1 ether);
-        vm.prank(psmSender);
-        psm.transfer(Bob, psmAmount);
-        vm.prank(usdcSender);
-        usdc.transfer(Bob, usdcAmount);
-
-        vm.deal(Karen, 1 ether);
-        vm.prank(psmSender);
-        psm.transfer(Karen, psmAmount);
-        vm.prank(usdcSender);
-        usdc.transfer(Karen, usdcAmount);
+        // Verifications
+        assertEq(aliceInitialUSDCBalance - _amountStake, aliceFinalUSDCBalance, "Alice's balance after staking is incorrect.");
+        assertEq(portal_USDC.totalPrincipalStaked(), _amountStake, "The total principal staked does not match the stake amount.");
     }
 
-//////////////////////////////////////////////////////
-
-            ////////////////////////////////////
-            ////////////////////////////////////
-                    //     FUZZ     //
-            ////////////////////////////////////
-            ////////////////////////////////////
-
-
-//////////////////
-// STAKE
-//////////////////
-
-//////////// testFuzzingStakeUSDC ////////////
-
-function testFuzzingStakeUSDC(uint256 fuzzAmount) public {
-    // Setup the system
-    helper_create_bToken();
-    helper_fundLP();
-    helper_registerPortalETH();
-    helper_registerPortalUSDC();
-    helper_activateLP();
-
-    // Set up approvals on LP for USDC
-    virtualLP.increaseAllowanceDualStaking();
-    virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
-    virtualLP.increaseAllowanceVault(address(portal_USDC));
-
-    deal(address(usdc), Alice, 1e10);
-    uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
-
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialUSDCBalance);
-
-    // Approval and Stake
-    vm.startPrank(Alice);
-    usdc.approve(address(portal_USDC), fuzzAmount);
-    portal_USDC.stake(fuzzAmount);
-    vm.stopPrank();
-
-    uint256 aliceFinalUSDCBalance = usdc.balanceOf(Alice);
-
-    // Verifications
-    assertEq(aliceInitialUSDCBalance - fuzzAmount, aliceFinalUSDCBalance, "Alice's balance after staking is incorrect.");
-    assertEq(portal_USDC.totalPrincipalStaked(), fuzzAmount, "The total principal staked does not match the stake amount.");
-}
-
-
-//////////// invariant_StakeConsistencyUSDC ////////////
-
-
-// function invariant_StakeConsistencyUSDC() public {
-//     // Prepare the system
-//     helper_prepareSystem();
-//     helper_setApprovalsInLP_USDC();
-//     // Assign a USDC balance to Alice to ensure sufficient funds for staking.
-//     uint256 initialFunds = 1e10;
-//     deal(address(usdc), Alice, initialFunds);
-
-//     // Save the initial state for comparison after staking.
-//     uint256 totalStakedBefore = portal_USDC.totalPrincipalStaked();
-//     uint256 aliceBalanceBefore = usdc.balanceOf(Alice);
-
-//     // Perform a staking operation.
-//     uint256 stakeAmount = 1e6; // A fixed amount for this example, would be variable in fuzzing.
-//     vm.startPrank(Alice);
-//     usdc.approve(address(portal_USDC), initialFunds);
-//     portal_USDC.stake(stakeAmount);
-//     vm.stopPrank();
-
-//     // Verify invariants.
-//     uint256 totalStakedAfter = portal_USDC.totalPrincipalStaked();
-//     uint256 aliceBalanceAfter = usdc.balanceOf(Alice);
-
-//     // Invariant 1: The total staked in the contract must increase exactly by `stakeAmount`.
-//     assertEq(totalStakedBefore + stakeAmount, totalStakedAfter, "Total staked amount inconsistent");
-
-//     // Invariant 2: Alice's USDC balance must decrease by `stakeAmount`.
-//     assertEq(aliceBalanceBefore - stakeAmount, aliceBalanceAfter, "Alice's USDC balance inconsistent after staking");
-// }
-
-
-//////////// testFuzzingStakeETH ////////////
-
-
-    function testFuzzingStakeETH(uint256 fuzzAmount) public {
+    function testFuzzingStakeETH(uint256 _amountStake) public {
         // Prepare the system
         helper_create_bToken();
         helper_fundLP();
@@ -239,19 +65,19 @@ function testFuzzingStakeUSDC(uint256 fuzzAmount) public {
 
         deal(address(weth), Alice, 1e10);
         uint256 balanceBefore = Alice.balance;
-        vm.assume(fuzzAmount > 0 && fuzzAmount <= balanceBefore);
+        vm.assume(_amountStake > 0 && _amountStake <= balanceBefore);
 
         // Approval and Stake
         vm.startPrank(Alice);
-        portal_ETH.stake{value: fuzzAmount}(fuzzAmount);
+        portal_ETH.stake{value: _amountStake}(_amountStake);
 
         vm.stopPrank();
 
         uint256 aliceFinalETHBalance =  Alice.balance;
 
         // Verifications
-        assertEq(balanceBefore - fuzzAmount, aliceFinalETHBalance, "Alice's balance after staking is incorrect.");
-        assertEq(portal_ETH.totalPrincipalStaked(), fuzzAmount, "The total principal staked does not match the stake amount.");
+        assertEq(balanceBefore - _amountStake, aliceFinalETHBalance, "Alice's balance after staking is incorrect.");
+        assertEq(portal_ETH.totalPrincipalStaked(), _amountStake, "The total principal staked does not match the stake amount.");
     }
 
 
@@ -289,7 +115,7 @@ function testFuzzingStakeUSDC(uint256 fuzzAmount) public {
 //////////// testFuzz_Revert_stake_PortalNotRegistered ////////////
 
 
-function testFuzz_Revert_stake_PortalNotRegistered(uint256 fuzzAmount) public {
+function testFuzz_Revert_stake_PortalNotRegistered(uint256 _amountStake) public {
     helper_create_bToken();
     helper_fundLP();
     helper_activateLP();
@@ -297,16 +123,16 @@ function testFuzz_Revert_stake_PortalNotRegistered(uint256 fuzzAmount) public {
     deal(address(usdc), Alice, 1e10);
     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
 
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialUSDCBalance);
+    vm.assume(_amountStake > 0 && _amountStake <= aliceInitialUSDCBalance);
 
     vm.startPrank(Alice);
     
     // Approve the fuzzed amount for the portal_USDC contract
-    usdc.approve(address(portal_USDC), fuzzAmount);
+    usdc.approve(address(portal_USDC), _amountStake);
 
     // Expect the transaction to be reverted due to the Portal not being registered
     vm.expectRevert(ErrorsLib.PortalNotRegistered.selector);
-    portal_USDC.stake(fuzzAmount);
+    portal_USDC.stake(_amountStake);
 
     vm.stopPrank();
 }
@@ -353,7 +179,7 @@ function testFuzz_Revert_stake_PortalNotRegistered(uint256 fuzzAmount) public {
 
 //////////// testFuzz_Revert_stake_Zero ////////////
 
-function testFuzz_Revert_stake_Zero(uint256 fuzzAmount) public {
+function testFuzz_Revert_stake_Zero(uint256 _amountStake) public {
     helper_create_bToken();
     helper_fundLP();
     helper_activateLP();
@@ -362,13 +188,13 @@ function testFuzz_Revert_stake_Zero(uint256 fuzzAmount) public {
     deal(address(usdc), Alice, 1e10); // Ensure Alice has enough USDC
     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
 
-    // Assume fuzzAmount is valid and not zero
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialUSDCBalance);
+    // Assume _amountStake is valid and not zero
+    vm.assume(_amountStake > 0 && _amountStake <= aliceInitialUSDCBalance);
 
     vm.startPrank(Alice);
     
     // Approve the fuzzed amount for the portal_USDC contract
-    usdc.approve(address(portal_USDC), fuzzAmount);
+    usdc.approve(address(portal_USDC), _amountStake);
 
     // Attempting to stake 0 should revert with the error InvalidAmount
     vm.expectRevert(ErrorsLib.InvalidAmount.selector);
@@ -379,7 +205,7 @@ function testFuzz_Revert_stake_Zero(uint256 fuzzAmount) public {
 
 //////////// testFuzz_Revert_stake_Ether ////////////
 
-function testFuzz_Revert_stake_Ether(uint256 fuzzAmount) public {
+function testFuzz_Revert_stake_Ether(uint256 _amountStake) public {
     helper_create_bToken();
     helper_fundLP();
     helper_activateLP();
@@ -388,16 +214,16 @@ function testFuzz_Revert_stake_Ether(uint256 fuzzAmount) public {
     deal(address(usdc), Alice, 1e10); // Ensure Alice has enough USDC
     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
 
-    // Assume fuzzAmount is valid and not zero
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialUSDCBalance);
+    // Assume _amountStake is valid and not zero
+    vm.assume(_amountStake > 0 && _amountStake <= aliceInitialUSDCBalance);
 
     vm.startPrank(Alice);
     
     // Approve the fuzzed amount for the portal_USDC contract
-    usdc.approve(address(portal_USDC), fuzzAmount);
+    usdc.approve(address(portal_USDC), _amountStake);
 
     vm.expectRevert(ErrorsLib.NativeTokenNotAllowed.selector);
-    portal_USDC.stake{value: fuzzAmount}(fuzzAmount); // Sending a fixed amount of ether
+    portal_USDC.stake{value: _amountStake}(_amountStake); // Sending a fixed amount of ether
 
     vm.stopPrank();
 }
@@ -406,7 +232,7 @@ function testFuzz_Revert_stake_Ether(uint256 fuzzAmount) public {
 //////////// testFuzz_Revert_stake_0_InvalidAmount ////////////
 
 
-function testFuzz_Revert_stake_0_InvalidAmount(uint256 fuzzAmount) public {
+function testFuzz_Revert_stake_0_InvalidAmount(uint256 _amountStake) public {
     helper_create_bToken();
     helper_fundLP();
     helper_registerPortalETH();
@@ -416,13 +242,13 @@ function testFuzz_Revert_stake_0_InvalidAmount(uint256 fuzzAmount) public {
     deal(address(weth), Alice, 1e10); // Ensure Alice has enough USDC
     uint256 aliceInitialETHBalance = Alice.balance;
 
-    // Assume fuzzAmount is valid and not zero
-    vm.assume(fuzzAmount > 0 && fuzzAmount <= aliceInitialETHBalance);
+    // Assume _amountStake is valid and not zero
+    vm.assume(_amountStake > 0 && _amountStake <= aliceInitialETHBalance);
 
     vm.startPrank(Alice);
 
     vm.expectRevert(ErrorsLib.InvalidAmount.selector);
-    portal_ETH.stake{value: 0}(fuzzAmount); // Sending a fixed amount of ether
+    portal_ETH.stake{value: 0}(_amountStake); // Sending a fixed amount of ether
 
     vm.stopPrank();
 }
@@ -461,22 +287,22 @@ function testFuzz_Revert_stake_0_InvalidAmount(uint256 fuzzAmount) public {
 
 //////////// testSuccess_unstake_USDC ////////////
 
-function testSuccess_unstake_USDC(uint256 fuzzAmount) public {
+function testSuccess_unstake_USDC(uint256 _amountStake) public {
     // STAKE
     helper_prepareSystem();
     helper_setApprovalsInLP_USDC();
 
     uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
     uint256 minOperationalAmount = 1e4; // Example of a minimum operational amount considering fees
-    vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
+    vm.assume(_amountStake >= minOperationalAmount && _amountStake <= aliceInitialUSDCBalance);
 
     vm.startPrank(Alice);
-    helper_Stake(Alice, fuzzAmount);
+    helper_Stake(Alice, _amountStake);
     vm.stopPrank();
 
     // UNSTAKE
     uint256 balanceBefore = usdc.balanceOf(Alice);
-    uint256 withdrawShares = IWater(USDC_WATER).convertToShares(fuzzAmount);
+    uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amountStake);
     uint256 grossReceived = IWater(USDC_WATER).convertToAssets(withdrawShares);
     uint256 denominator = IWater(USDC_WATER).DENOMINATOR();
     uint256 fees = (grossReceived * IWater(USDC_WATER).withdrawalFees()) / denominator;
@@ -485,11 +311,11 @@ function testSuccess_unstake_USDC(uint256 fuzzAmount) public {
     vm.warp(block.timestamp + 100);
 
     vm.prank(Alice);
-    portal_USDC.unstake(fuzzAmount);
+    portal_USDC.unstake(_amountStake);
 
     uint256 balanceAfter = usdc.balanceOf(Alice);
 
-    assertEq(balanceBefore, usdcAmount - fuzzAmount);
+    assertEq(balanceBefore, usdcAmount - _amountStake);
     assertEq(balanceAfter, balanceBefore + netReceived);
     assertTrue(balanceAfter <= usdcAmount);
 }
@@ -536,28 +362,28 @@ function testSuccess_unstake_USDC(uint256 fuzzAmount) public {
 
 //////////// testSuccess_unstake_ETH ////////////
 
-function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
+function testSuccess_unstake_ETH(uint256 _amountStake) public {
     // STAKE
     helper_prepareSystem();
     helper_setApprovalsInLP_ETH();
 
     uint256 balanceBefore2 = Alice.balance;
     uint256 minOperationalAmount = 1e4; 
-    vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= balanceBefore2);
+    vm.assume(_amountStake >= minOperationalAmount && _amountStake <= balanceBefore2);
     
     vm.startPrank(Alice);
-    portal_ETH.stake{value: fuzzAmount}(fuzzAmount);
+    portal_ETH.stake{value: _amountStake}(_amountStake);
     vm.stopPrank();
 
     uint256 aliceFinalETHBalance = Alice.balance;
 
     // Verifications
-    assertEq(balanceBefore2 - fuzzAmount, aliceFinalETHBalance, "Alice's balance after stake is incorrect.");
-    assertEq(portal_ETH.totalPrincipalStaked(), fuzzAmount, "The total principal staked does not match the stake amount.");
+    assertEq(balanceBefore2 - _amountStake, aliceFinalETHBalance, "Alice's balance after stake is incorrect.");
+    assertEq(portal_ETH.totalPrincipalStaked(), _amountStake, "The total principal staked does not match the stake amount.");
 
     // UNSTAKE
     uint256 balanceBefore = Alice.balance;
-    uint256 withdrawShares = IWater(WETH_WATER).convertToShares(fuzzAmount);
+    uint256 withdrawShares = IWater(WETH_WATER).convertToShares(_amountStake);
     uint256 grossReceived = IWater(WETH_WATER).convertToAssets(withdrawShares);
     uint256 denominator = IWater(WETH_WATER).DENOMINATOR();
     uint256 fees = (grossReceived * IWater(WETH_WATER).withdrawalFees()) / denominator;
@@ -566,11 +392,11 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
     vm.warp(block.timestamp + 100);
 
     vm.prank(Alice);
-    portal_ETH.unstake(fuzzAmount);
+    portal_ETH.unstake(_amountStake);
 
     uint256 balanceAfter = Alice.balance;
 
-    assertEq(balanceBefore, 1e18 - fuzzAmount);
+    assertEq(balanceBefore, 1e18 - _amountStake);
     assertEq(balanceAfter, balanceBefore + netReceived);
     assertTrue(balanceAfter <= 1e18);
 }
@@ -631,7 +457,7 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
 //////////// testSuccess_mintNFTposition ////////////
 
-    function testSuccess_mintNFTposition(uint256 fuzzAmount, uint256 fuzzAmount2) public {
+    function testSuccess_mintNFTposition(uint256 _amountStake, uint256 fuzzAmount2) public {
         helper_createNFT();
         // STAKE //
         helper_prepareSystem();
@@ -639,11 +465,11 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
         uint256 minOperationalAmount = 1e4; 
-        vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
-        vm.assume(fuzzAmount2 >= minOperationalAmount && fuzzAmount2 <= aliceInitialUSDCBalance && fuzzAmount2 != fuzzAmount);
+        vm.assume(_amountStake >= minOperationalAmount && _amountStake <= aliceInitialUSDCBalance);
+        vm.assume(fuzzAmount2 >= minOperationalAmount && fuzzAmount2 <= aliceInitialUSDCBalance && fuzzAmount2 != _amountStake);
 
         vm.startPrank(Alice);
-        helper_Stake(Alice, fuzzAmount);
+        helper_Stake(Alice, _amountStake);
         vm.stopPrank();
 
         (
@@ -693,7 +519,7 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
 //////////// testSuccess_2_mintNFTposition ////////////
 
-    function testSuccess_2_mintNFTposition(uint256 fuzzAmount) public {
+    function testSuccess_2_mintNFTposition(uint256 _amountStake) public {
         helper_createNFT(); 
         // STAKE //
         helper_prepareSystem();
@@ -701,10 +527,10 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
         uint256 minOperationalAmount = 1e4;
-        vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
+        vm.assume(_amountStake >= minOperationalAmount && _amountStake <= aliceInitialUSDCBalance);
 
         vm.startPrank(Alice);
-        helper_Stake(Alice, fuzzAmount);
+        helper_Stake(Alice, _amountStake);
         vm.stopPrank();
 
         (
@@ -754,7 +580,7 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
 //////////// test_EmptyAccount_mintNFTposition ////////////
 
-    function test_EmptyAccount_mintNFTposition(uint256 fuzzAmount, uint256 fuzzAmount2) public {
+    function test_EmptyAccount_mintNFTposition(uint256 _amountStake, uint256 fuzzAmount2) public {
         helper_createNFT();
         // STAKE //
         helper_prepareSystem();
@@ -762,11 +588,11 @@ function testSuccess_unstake_ETH(uint256 fuzzAmount) public {
 
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
         uint256 minOperationalAmount = 1e4; 
-        vm.assume(fuzzAmount >= minOperationalAmount && fuzzAmount <= aliceInitialUSDCBalance);
-        vm.assume(fuzzAmount2 >= minOperationalAmount && fuzzAmount2 <= aliceInitialUSDCBalance && fuzzAmount2 != fuzzAmount);
+        vm.assume(_amountStake >= minOperationalAmount && _amountStake <= aliceInitialUSDCBalance);
+        vm.assume(fuzzAmount2 >= minOperationalAmount && fuzzAmount2 <= aliceInitialUSDCBalance && fuzzAmount2 != _amountStake);
 
         vm.startPrank(Alice);
-        helper_Stake(Alice, fuzzAmount);
+        helper_Stake(Alice, _amountStake);
         vm.stopPrank();
 
         (

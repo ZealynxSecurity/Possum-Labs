@@ -1,138 +1,16 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity 0.8.19;
 
-import {FoundrySetup} from "./FoundrySetup.sol";
+import {FoundryLogic} from "./FoundryLogic.sol";
 import {ErrorsLib} from "../libraries/ErrorsLib.sol";
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 
-contract ZealynxVirtualLPTest is FoundrySetup {
-
-    // ============================================
-    // ==             HELPER ACTIONS             ==
-    // ============================================
-    function _register(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        // Precondition
-        vm.prank(psmSender);
-        virtualLP.registerPortal(
-            testPortal, 
-            testAsset, 
-            testVault, 
-            testPid
-        );
-    }
-
-    function _prepareLP() internal {
-        _create_bToken();
-        _fundLP();
-        _register(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC
-        );
-        _register(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            WETH_WATER,
-            _POOL_ID_WETH
-        );
-        _activateLP();
-    }
-
-    // create the bToken token
-    function _create_bToken() internal {
-        virtualLP.create_bToken();
-    }
-
-    // fund the Virtual LP
-    function _fundLP() internal {
-        vm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
-        virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT);
-    }
-
-    // activate the Virtual LP
-    function _activateLP() internal {
-        vm.warp(fundingPhase);
-        virtualLP.activateLP();
-    }
-
-    // send USDC to LP when balance is required
-    function helper_sendUSDCtoLP() internal {
-        vm.prank(usdcSender);
-        usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
-    }
-
-    function _prepareYieldSourceUSDC(uint256 _amount) internal {
-        _prepareLP();
-
-        vm.prank(usdcSender);
-        usdc.transfer(address(portal_USDC), _amount);
-
-        vm.prank(address(portal_USDC));
-        usdc.transfer(address(virtualLP), _amount);
-
-        vm.prank(address(portal_USDC));
-        usdc.approve(address(virtualLP), 1e55);
-        vm.prank(address(portal_USDC));
-        virtualLP.increaseAllowanceVault(address(portal_USDC));
-        virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
-        virtualLP.increaseAllowanceDualStaking();
-    }
-
-    function prepare_contribution() internal {
-        uint256 _fundingAmount = 1e18;
-        _create_bToken();
-
-        vm.prank(Alice);
-        psm.approve(address(virtualLP), 1e55);
-        vm.prank(Alice);
-        virtualLP.contributeFunding(_fundingAmount);
-    }
-
-    function prepare_convert() internal {
-        vm.prank(Alice);
-        prepare_contribution();
-
-        // Precondition
-        _fundLP();
-        _activateLP();
-
-        // Action
-        helper_sendUSDCtoLP();
-        vm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        vm.prank(psmSender);
-    }
-
-    // ============================================
-    // ==          HELPER VERIFICATIONS          ==
-    // ============================================
-    function _assertPortalRegistered(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        assertTrue(virtualLP.registeredPortals(testPortal) == true);
-        assertTrue(virtualLP.vaults(testPortal, testAsset) == testVault);
-        assertTrue(virtualLP.poolID(testPortal, testAsset) == testPid); 
-    }
+contract ZealynxVirtualLPTest is FoundryLogic {
 
     // ============================================
     // ==            REGISTER PORTAL             ==
     // ============================================
-
-    ///////////////////////////////////////////////
-    ////////////////// UNIT TESTS /////////////////
-    ///////////////////////////////////////////////
 
     function test_register_portal_usdc() public {
         address testPortal = address(portal_USDC);
@@ -201,10 +79,6 @@ contract ZealynxVirtualLPTest is FoundrySetup {
     // ============================================
     // ==              REMOVE OWNER              ==
     // ============================================
-
-    ///////////////////////////////////////////////
-    ////////////////// UNIT TESTS /////////////////
-    ///////////////////////////////////////////////
     
     function test_address_changed_to_zero() public {
         // Precondition
@@ -230,10 +104,6 @@ contract ZealynxVirtualLPTest is FoundrySetup {
     // ==        DEPOSIT TO YIELD SOURCE         ==
     // ============================================
 
-    ///////////////////////////////////////////////
-    ////////////////// UNIT TESTS /////////////////
-    ///////////////////////////////////////////////
-
     function test_deposit_to_yield_source() public {
         // Preconditions
         uint256 _amount = 1e7;
@@ -254,41 +124,33 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         vm.expectRevert(ErrorsLib.PortalNotRegistered.selector);
         virtualLP.depositToYieldSource(address(usdc), _amount);
     }
-
-    ///////////////////////////////////////////////
-    ////////////////// FUZZ TESTS /////////////////
-    ///////////////////////////////////////////////
     
-    // function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
-    //     // Preconditions
-    //     vm.assume(_amount > 0);
-    //     vm.assume(_amount < 1e18);
+    function test_fuzz_deposit_to_yield_source(uint256 _amount) public {
+        // Preconditions
+        vm.assume(_amount > 0);
+        vm.assume(_amount < 1e18);
 
-    //     _prepareYieldSourceUSDC(_amount);
+        _prepareYieldSourceUSDC(_amount);
 
-    //     // Action
-    //     vm.prank(address(portal_USDC));
-    //     virtualLP.depositToYieldSource(address(usdc), _amount);
+        // Action
+        vm.prank(address(portal_USDC));
+        virtualLP.depositToYieldSource(address(usdc), _amount);
 
-    //     // Check that stake was processed correctly in Vault and staking contract
-    //     uint256 depositShares = IWater(USDC_WATER).convertToShares(_amount);
-    //     uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
-    //         _POOL_ID_USDC,
-    //         address(virtualLP)
-    //     );
+        // Check that stake was processed correctly in Vault and staking contract
+        uint256 depositShares = IWater(USDC_WATER).convertToShares(_amount);
+        uint256 stakedShares = ISingleStaking(SINGLE_STAKING).getUserAmount(
+            _POOL_ID_USDC,
+            address(virtualLP)
+        );
 
-    //     // Verification
-    //     assertTrue(usdc.balanceOf(address(portal_USDC)) == 0);
-    //     assertTrue(depositShares == stakedShares);
-    // }
+        // Verification
+        assertTrue(usdc.balanceOf(address(portal_USDC)) == 0);
+        assertTrue(depositShares == stakedShares);
+    }
 
     // ============================================
     // ==       WITHDRAW FROM YIELD SOURCE       ==
     // ============================================
-
-    ///////////////////////////////////////////////
-    ////////////////// UNIT TESTS /////////////////
-    ///////////////////////////////////////////////
 
     function test_only_registered_portal_withdraw_from_yield_source() public {
         // Preconditions
@@ -304,43 +166,37 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         virtualLP.withdrawFromYieldSource(address(usdc), Alice, _amount);
     }
 
-    ///////////////////////////////////////////////
-    ////////////////// FUZZ TESTS /////////////////
-    ///////////////////////////////////////////////
-
-    // function test_withdraw_from_yield_source(uint256 _amount) public {
-    //     // Preconditions
-    //     vm.assume(_amount > 0);
-    //     _prepareYieldSourceUSDC(_amount);
-    //     vm.prank(address(portal_USDC));
-    //     virtualLP.depositToYieldSource(address(usdc), _amount);
+    function test_fuzz_withdraw_from_yield_source(uint256 _amount) public {
+        // Preconditions
+        vm.assume(_amount > 0);
+        _prepareYieldSourceUSDC(_amount);
+        vm.prank(address(portal_USDC));
+        virtualLP.depositToYieldSource(address(usdc), _amount);
 
 
-    //     uint256 balanceUser1Start = usdc.balanceOf(Alice);
-    //     vm.warp(block.timestamp + 100);
+        uint256 balanceUser1Start = usdc.balanceOf(Alice);
+        vm.warp(block.timestamp + 100);
 
-    //     uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amount);
-    //     uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
-    //         withdrawShares
-    //     );
-    //     uint256 denominator = IWater(USDC_WATER).DENOMINATOR();
-    //     uint256 fees = (grossReceived * IWater(USDC_WATER).withdrawalFees()) /
-    //         denominator;
-    //     uint256 netReceived = grossReceived - fees;
+        uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amount);
+        uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
+            withdrawShares
+        );
+        uint256 denominator = IWater(USDC_WATER).DENOMINATOR();
+        uint256 fees = (grossReceived * IWater(USDC_WATER).withdrawalFees()) /
+            denominator;
+        uint256 netReceived = grossReceived - fees;
 
-    //     // Action
-    //     vm.prank(address(portal_USDC));
-    //     virtualLP.withdrawFromYieldSource(address(usdc), Alice, _amount);
+        // Action
+        vm.prank(address(portal_USDC));
+        virtualLP.withdrawFromYieldSource(address(usdc), Alice, _amount);
 
-    //     // Verification
-    //     assertTrue(usdc.balanceOf(Alice) == balanceUser1Start + netReceived);
-    // }
+        // Verification
+        assertTrue(usdc.balanceOf(Alice) == balanceUser1Start + netReceived);
+    }
 
     // ============================================
     // ==              PSM CONVERTER             ==
     // ============================================
-
-    //////////////// UNIT TESTS /////////////////
 
     function test_convert() public {
         prepare_convert();
@@ -427,10 +283,6 @@ contract ZealynxVirtualLPTest is FoundrySetup {
         vm.expectRevert(ErrorsLib.InsufficientReceived.selector);
         virtualLP.convert(_PRINCIPAL_TOKEN_ADDRESS_USDC, Alice, 1e18, block.timestamp + 1 days);
     }
-
-    ///////////////////////////////////////////////
-    ////////////////// FUZZ TESTS /////////////////
-    ///////////////////////////////////////////////
 
     function test_fuzz_convert(uint256 _deadline) public {
         // Precondition

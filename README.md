@@ -154,7 +154,8 @@ halmos --contract ZealynxHalmosVirtual --solver-timeout-assertion 0
 - test/V2MultiAsset/Ityfuzz/ItyfuzzPortalV2MultiAsset.sol
   
 ```solidity
-halmos --contract ZealynxHalmos_PortalV2 --solver-timeout-assertion 0
+ityfuzz evm -m ItyfuzzPortalV2MultiAsset -- forge build
+
 ```
 
 
@@ -163,7 +164,8 @@ halmos --contract ZealynxHalmos_PortalV2 --solver-timeout-assertion 0
 - test/V2MultiAsset/Ityfuzz/ItyfuzzVirtuLp.sol
 
 ```solidity
-halmos --contract ZealynxHalmosVirtual --solver-timeout-assertion 0
+ityfuzz evm -m ItyfuzzVirtuaLp -- forge build
+
 ```
 
 <img width="700" alt="image" src="image/Ity.png">
@@ -213,10 +215,10 @@ halmos --contract ZealynxHalmosVirtual --solver-timeout-assertion 0
 | 30 | test_funding_balance_decreased | VirtualLP | WITHDRAW FUNDING | ✅ |
 | 31 | test_bToken_burned | VirtualLP | WITHDRAW FUNDING | ✅ |
 | 32 | test_fuzz_withdraw_funding | VirtualLP | WITHDRAW FUNDING | ✅ |
-| 33 | test_revert_get_burn_value_psm_inactive_lp | VirtualLP | GET BURN VALUE PSM |  |
-| 34 | test_fuzz_get_burn_value_psm | VirtualLP | GET BURN VALUE PSM |  |
-| 35 | test_revert_burn_zero_b_tokens | VirtualLP | BURN B TOKENS |  |
-| 36 | test_fuzz_burn_b_tokens | VirtualLP | BURN B TOKENS |  |
+| 33 | test_revert_get_burn_value_psm_inactive_lp | VirtualLP | GET BURN VALUE PSM | ✅ |
+| 34 | test_fuzz_get_burn_value_psm | VirtualLP | GET BURN VALUE PSM | ✅ |
+| 35 | test_revert_burn_zero_b_tokens | VirtualLP | BURN B TOKENS | ✅ |
+| 36 | test_fuzz_burn_b_tokens | VirtualLP | BURN B TOKENS | ✅ |
 
 
 

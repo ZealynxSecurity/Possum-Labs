@@ -18,7 +18,7 @@ import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 
 
-contract ItyfuzzVirtuLp is Test {
+contract ItyfuzzVirtuaLp is Test {
     MintBurnToken internal psmToken;
     VirtualLP internal virtualLP;
  

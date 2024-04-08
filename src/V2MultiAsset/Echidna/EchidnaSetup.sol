@@ -51,6 +51,8 @@ contract EchidnaSetup is EchidnaConfig {
     uint256 constant _AMOUNT_TO_CONVERT = 100000 * 1e18;
     uint256 internal constant FUNDING_REWARD_SHARE = 10; // 10% of yield goes to the funding pool until investors are paid back
 
+    uint256 internal DENOMINATOR;
+
     string _META_DATA_URI = "abcd";
 
     // time
@@ -123,12 +125,14 @@ contract EchidnaSetup is EchidnaConfig {
         ownerExpiry = timestamp + OWNER_DURATION;
         hundredYearsLater = timestamp + 100 * SECONDS_PER_YEAR;
 
+        DENOMINATOR = SECONDS_PER_YEAR * _DECIMALS_USDC;
+
         // Deal tokens to addresses
         hevm.prank(psmSender);
         psm.transfer(USER1, psmAmount);
         hevm.prank(usdcSender);
         usdc.transfer(USER1, usdcAmount);
-
+        
         hevm.prank(psmSender);
         psm.transfer(USER2, psmAmount);
         hevm.prank(usdcSender);

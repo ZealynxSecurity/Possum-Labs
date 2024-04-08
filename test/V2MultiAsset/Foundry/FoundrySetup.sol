@@ -150,5 +150,4 @@ contract FoundrySetup is Test {
         vm.prank(usdcSender);
         usdc.transfer(Karen, usdcAmount);
     }
-
 }

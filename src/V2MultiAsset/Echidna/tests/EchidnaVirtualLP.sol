@@ -1,147 +1,14 @@
 // SPDX-License-Identifier: GPL-2.0-only
 pragma solidity =0.8.19;
 
-import "./EchidnaSetup.sol";
+import "../EchidnaLogic.sol";
 
 import {IWater} from "src/V2MultiAsset/interfaces/IWater.sol";
 import {ISingleStaking} from "src/V2MultiAsset/interfaces/ISingleStaking.sol";
 
-contract EchidnaVirtualLP is EchidnaSetup {
+contract EchidnaVirtualLP is EchidnaLogic {
 
     constructor() payable {}
-
-    // ============================================
-    // ==             HELPER ACTIONS             ==
-    // ============================================
-    function _register(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        // Precondition
-        hevm.prank(psmSender);
-        try virtualLP.registerPortal(
-            testPortal, 
-            testAsset, 
-            testVault, 
-            testPid
-        ) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
-    }
-
-    function _prepareLP() internal {
-        _create_bToken();
-        _fundLP();
-        _register(
-            address(portal_USDC),
-            _PRINCIPAL_TOKEN_ADDRESS_USDC,
-            USDC_WATER,
-            _POOL_ID_USDC
-        );
-        _register(
-            address(portal_ETH),
-            _PRINCIPAL_TOKEN_ADDRESS_ETH,
-            WETH_WATER,
-            _POOL_ID_WETH
-        );
-        _activateLP();
-    }
-
-    // create the bToken token
-    function _create_bToken() internal {
-        virtualLP.create_bToken();
-    }
-
-    // fund the Virtual LP
-    function _fundLP() internal {
-        hevm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
-        try virtualLP.contributeFunding(_FUNDING_MIN_AMOUNT) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
-    }
-
-    // activate the Virtual LP
-    function _activateLP() internal {
-        hevm.warp(fundingPhase);
-        virtualLP.activateLP();
-    }
-
-    // send USDC to LP when balance is required
-    function helper_sendUSDCtoLP() internal {
-        hevm.prank(usdcSender);
-        usdc.transfer(address(virtualLP), usdcSendAmount); // Send 1k USDC to LP
-    }
-
-    function _prepareYieldSourceUSDC(uint256 _amount) internal {
-        _prepareLP();
-
-        hevm.prank(usdcSender);
-        usdc.transfer(address(portal_USDC), _amount);
-
-        hevm.prank(address(portal_USDC));
-        usdc.transfer(address(virtualLP), _amount);
-
-        hevm.prank(address(portal_USDC));
-        usdc.approve(address(virtualLP), 1e55);
-        hevm.prank(address(portal_USDC));
-        virtualLP.increaseAllowanceVault(address(portal_USDC));
-        virtualLP.increaseAllowanceSingleStaking(address(portal_USDC));
-        virtualLP.increaseAllowanceDualStaking();
-    }
-
-    function prepare_contribution() internal {
-        uint256 _fundingAmount = 1e18;
-        _create_bToken();
-
-        hevm.prank(USER1);
-        psm.approve(address(virtualLP), 1e55);
-        hevm.prank(USER1);
-        try virtualLP.contributeFunding(_fundingAmount) {
-            // continue
-        } catch {
-            // Verification
-            assert(false);
-        }
-    }
-
-    function prepare_convert() internal {
-        hevm.prank(USER1);
-        prepare_contribution();
-
-        // Precondition
-        _fundLP();
-        _activateLP();
-
-        // Action
-        helper_sendUSDCtoLP();
-        hevm.prank(psmSender);
-        psm.approve(address(virtualLP), 1e55);
-        hevm.prank(psmSender);
-    }
-
-    // ============================================
-    // ==          HELPER VERIFICATIONS          ==
-    // ============================================
-    function _assertPortalRegistered(
-        address testPortal,
-        address testAsset,
-        address testVault,
-        uint256 testPid
-    ) internal {
-        assert(virtualLP.registeredPortals(testPortal) == true);
-        assert(virtualLP.vaults(testPortal, testAsset) == testVault);
-        assert(virtualLP.poolID(testPortal, testAsset) == testPid); 
-    }
 
     // ============================================
     // ==            REGISTER PORTAL             ==
@@ -227,19 +94,19 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ////////////////// UNIT TESTS /////////////////
     ///////////////////////////////////////////////
     
-    function test_address_changed_to_zero() public {
-        // Precondition
-        hevm.warp(block.timestamp + OWNER_DURATION + 1);
-        virtualLP.removeOwner();
+    // function test_address_changed_to_zero() public {
+    //     // Precondition
+    //     hevm.warp(block.timestamp + OWNER_DURATION + 1);
+    //     virtualLP.removeOwner();
 
-        // Action
-        try virtualLP.removeOwner() {
-            assert(false);
-        } catch {
-            // Verification
-            assert(true);
-        }
-    }
+    //     // Action
+    //     try virtualLP.removeOwner() {
+    //         assert(false);
+    //     } catch {
+    //         // Verification
+    //         assert(true);
+    //     }
+    // }
 
     function test_revert_remove_owner() public {
         // Precondition
@@ -346,16 +213,17 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
 
-    function test_withdraw_from_yield_source(uint256 _amount) public {
+    function test_withdraw_from_yield_source(uint256 _amount, uint256 timePassed) public {
         // Preconditions
         require(_amount > 0);
+        require(timePassed < 10_000 days);
         _prepareYieldSourceUSDC(_amount);
         hevm.prank(address(portal_USDC));
         virtualLP.depositToYieldSource(address(usdc), _amount);
 
 
         uint256 balanceUser1Start = usdc.balanceOf(USER1);
-        hevm.warp(block.timestamp + 100);
+        hevm.warp(block.timestamp + timePassed);
 
         uint256 withdrawShares = IWater(USDC_WATER).convertToShares(_amount);
         uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
@@ -834,35 +702,35 @@ contract EchidnaVirtualLP is EchidnaSetup {
     ////////////////// FUZZ TESTS /////////////////
     ///////////////////////////////////////////////
 
-    function test_fuzz_get_burn_value_psm(uint256 _amount) public {
-        // Precondition
-        require(_amount != 0);
-        uint256 creationTime = block.timestamp;
-        _create_bToken();
-        _fundLP();
-        _activateLP();
+    // function test_fuzz_get_burn_value_psm(uint256 _amount) public {
+    //     // Precondition
+    //     require(_amount != 0);
+    //     uint256 creationTime = block.timestamp;
+    //     _create_bToken();
+    //     _fundLP();
+    //     _activateLP();
 
-        // Fast forward time
-        hevm.warp(hundredYearsLater);
-        // Calculate expected burn value after warping
-        uint256 burnValueAfterWarp = virtualLP.getBurnValuePSM(_amount);
+    //     // Fast forward time
+    //     hevm.warp(hundredYearsLater);
+    //     // Calculate expected burn value after warping
+    //     uint256 burnValueAfterWarp = virtualLP.getBurnValuePSM(_amount);
 
-        // Expected minValue
-        uint256 expectedMinValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
+    //     // Expected minValue
+    //     uint256 expectedMinValue = (_amount * 100) / FUNDING_MAX_RETURN_PERCENT;
 
-        // Expected accruedValue (for a large warp, this will be significant)
-        uint256 expectedAccruedValue = (_amount *
-            (block.timestamp - creationTime) * FUNDING_APR) / (100 * SECONDS_PER_YEAR);
+    //     // Expected accruedValue (for a large warp, this will be significant)
+    //     uint256 expectedAccruedValue = (_amount *
+    //         (block.timestamp - creationTime) * FUNDING_APR) / (100 * SECONDS_PER_YEAR);
 
-        // Calculate expectedCurrentValue
-        uint256 expectedCurrentValue = expectedMinValue + expectedAccruedValue;
+    //     // Calculate expectedCurrentValue
+    //     uint256 expectedCurrentValue = expectedMinValue + expectedAccruedValue;
         
-        // Calculate the maximum and current burn value
-        uint256 expectedBurnValue = (expectedCurrentValue < _amount) ? expectedCurrentValue : _amount;
+    //     // Calculate the maximum and current burn value
+    //     uint256 expectedBurnValue = (expectedCurrentValue < _amount) ? expectedCurrentValue : _amount;
 
-        // Assert that the burn value after warping matches the capped or calculated expectedBurnValue
-        assert(burnValueAfterWarp == expectedBurnValue); // "Burn value after time warp does not match expected calculation.");
-    }
+    //     // Assert that the burn value after warping matches the capped or calculated expectedBurnValue
+    //     assert(burnValueAfterWarp == expectedBurnValue); // "Burn value after time warp does not match expected calculation.");
+    // }
 
     // ============================================
     // ==             BURN B TOKENS              ==

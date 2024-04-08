@@ -1,8 +1,8 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.0;
 
-import "./IHevm.sol";
-import "./Debugger.sol";
+import "./utils/IHevm.sol";
+import "./utils/Debugger.sol";
 
 contract EchidnaConfig {
     IHevm hevm = IHevm(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D);

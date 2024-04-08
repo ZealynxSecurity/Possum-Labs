@@ -93,10 +93,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
     function testFuzz_Revert_stake_Zero(uint256 _amountStake) public {
-        _create_bToken();
-        _fundLP();
-        _activateLP();
-        helper_registerPortalUSDC();
+        _prepareLP();
 
         deal(address(usdc), Alice, 1e10); // Ensure Alice has enough USDC
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
@@ -117,10 +114,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
     function testFuzz_Revert_stake_Ether(uint256 _amountStake) public {
-        _create_bToken();
-        _fundLP();
-        _activateLP();
-        helper_registerPortalUSDC();
+        _prepareLP();
 
         deal(address(usdc), Alice, 1e10); // Ensure Alice has enough USDC
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
@@ -140,10 +134,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
     function testFuzz_Revert_stake_0_InvalidAmount(uint256 _amountStake) public {
-        _create_bToken();
-        _fundLP();
-        helper_registerPortalETH();
-        _activateLP();
+        _prepareLP();
         helper_setApprovalsInLP_ETH();
 
         deal(address(weth), Alice, 1e10); // Ensure Alice has enough USDC
@@ -160,13 +151,15 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         vm.stopPrank();
     }
 
-//////////////////
-// UNSTAKE
-//////////////////
+    // ============================================
+    // ==                 UNSTAKE                ==
+    // ============================================
 
-    function testSuccess_unstake_USDC(uint256 _amountStake) public {
-        // STAKE
-        helper_prepareSystem();
+    function testUnstakeUSDC(uint256 _amountStake, uint256 timePassed) public {
+        vm.assume(timePassed != 0);
+        vm.assume(timePassed < 10_000 days);
+
+        _prepareLP();
         helper_setApprovalsInLP_USDC();
 
         uint256 aliceInitialUSDCBalance = usdc.balanceOf(Alice);
@@ -185,7 +178,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         uint256 fees = (grossReceived * IWater(USDC_WATER).withdrawalFees()) / denominator;
         uint256 netReceived = grossReceived - fees;
 
-        vm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + timePassed);
 
         vm.prank(Alice);
         portal_USDC.unstake(_amountStake);
@@ -198,9 +191,8 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
 
-    function testSuccess_unstake_ETH(uint256 _amountStake) public {
-        // STAKE
-        helper_prepareSystem();
+    function testSuccess_unstake_ETH(uint256 _amountStake, uint256 timePassed) public {
+        _prepareLP();
         helper_setApprovalsInLP_ETH();
 
         uint256 balanceBefore2 = Alice.balance;
@@ -225,7 +217,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         uint256 fees = (grossReceived * IWater(WETH_WATER).withdrawalFees()) / denominator;
         uint256 netReceived = grossReceived - fees;
 
-        vm.warp(block.timestamp + 100);
+        vm.warp(block.timestamp + timePassed);
 
         vm.prank(Alice);
         portal_ETH.unstake(_amountStake);
@@ -286,13 +278,12 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
 // }
 
 
-
-//////////////////
-// create_portalNFT
-//////////////////
+    // ============================================
+    // ==            MINT NFT POSITION           ==
+    // ============================================
 
     function testSuccess_mintNFTposition(uint256 _amountStake, uint256 fuzzAmount2) public {
-        helper_createNFT();
+        portal_USDC.create_portalNFT();
         // STAKE //
         helper_prepareSystem();
         helper_setApprovalsInLP_USDC();
@@ -351,7 +342,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
     function testSuccess_2_mintNFTposition(uint256 _amountStake) public {
-        helper_createNFT(); 
+        portal_USDC.create_portalNFT(); 
         // STAKE //
         helper_prepareSystem();
         helper_setApprovalsInLP_USDC();
@@ -409,7 +400,7 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
     }
 
     function test_EmptyAccount_mintNFTposition(uint256 _amountStake, uint256 fuzzAmount2) public {
-        helper_createNFT();
+        portal_USDC.create_portalNFT();
         // STAKE //
         helper_prepareSystem();
         helper_setApprovalsInLP_USDC();
@@ -606,46 +597,6 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         assertEq(portal_USDC.totalPrincipalStaked(), amount);
     }
     
-    function testSuccess_uinti_unstake_USDC() public { // @audit-ok
-        uint256 amount = 1e7;
-        helper_prepareSystem();
-        helper_setApprovalsInLP_USDC();
-
-         uint256 balanceBefore2 = usdc.balanceOf(Alice);
-
-        vm.startPrank(Alice);
-        usdc.approve(address(portal_USDC), 1e55);
-        console2.log("PRINCIPAL_TOKEN_ADDRESS",(portal_USDC.PRINCIPAL_TOKEN_ADDRESS()));
-        portal_USDC.stake(amount);
-        vm.stopPrank();
-
-        uint256 balanceAfter2 = usdc.balanceOf(Alice);
-
-        assertEq(balanceBefore2 - amount, balanceAfter2);
-        assertEq(portal_USDC.totalPrincipalStaked(), amount);
-
-
-         uint256 balanceBefore = usdc.balanceOf(Alice);
-        uint256 withdrawShares = IWater(USDC_WATER).convertToShares(amount);
-        uint256 grossReceived = IWater(USDC_WATER).convertToAssets(
-            withdrawShares
-        );
-        uint256 denominator = IWater(USDC_WATER).DENOMINATOR();
-        uint256 fees = (grossReceived * IWater(USDC_WATER).withdrawalFees()) /
-            denominator;
-        uint256 netReceived = grossReceived - fees;
-
-        vm.warp(block.timestamp + 100);
-
-        vm.prank(Alice);
-        portal_USDC.unstake(amount);
-
-        uint256 balanceAfter = usdc.balanceOf(Alice);
-
-        assertEq(balanceBefore, usdcAmount - amount);
-        assertEq(balanceAfter, balanceBefore + netReceived);
-        assertTrue(balanceAfter <= usdcAmount);
-    }
     // function test_No_Success_uinti_unstake_USDC() public { // @audit-ok
     //     uint256 amount = 1e7;
     //     helper_prepareSystem();
@@ -793,11 +744,6 @@ contract ZealynxPortalV2MultiAssetTest is FoundryLogic {
         helper_registerPortalETH();
         helper_registerPortalUSDC();
         helper_activateLP();
-    }
-
-    // Deploy the NFT contract
-    function helper_createNFT() public {
-        portal_USDC.create_portalNFT();
     }
 
     // Deploy the ERC20 contract for mintable Portal Energy

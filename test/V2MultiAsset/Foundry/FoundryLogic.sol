@@ -111,7 +111,7 @@ contract FoundryLogic is FoundrySetup {
         address testAsset,
         address testVault,
         uint256 testPid
-    ) internal {
+    ) internal view {
         assertTrue(virtualLP.registeredPortals(testPortal) == true);
         assertTrue(virtualLP.vaults(testPortal, testAsset) == testVault);
         assertTrue(virtualLP.poolID(testPortal, testAsset) == testPid); 

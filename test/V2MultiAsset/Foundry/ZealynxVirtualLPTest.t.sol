@@ -93,8 +93,6 @@ contract ZealynxVirtualLPTest is FoundryLogic {
     function test_revert_remove_owner() public {
         // Precondition
         vm.warp(OWNER_DURATION - 10);
-        address ownerBefore = virtualLP.owner.address;
-
         // Action
         vm.expectRevert(ErrorsLib.OwnerNotExpired.selector);
         virtualLP.removeOwner();
